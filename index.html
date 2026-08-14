@@ -348,6 +348,19 @@ select.btn{appearance:none;padding-right:1.6rem;
 .setup ol{margin:12px 0 10px;padding-left:1.2rem;line-height:1.8;}
 .setup code{background:color-mix(in srgb,var(--ink-faint) 20%,transparent);padding:.1rem .35rem;border-radius:6px;font-size:.92em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
 .setup pre{background:color-mix(in srgb,var(--ink-faint) 13%,transparent);border-radius:10px;padding:10px 12px;overflow:auto;font-size:.74rem;line-height:1.5;margin:0 0 10px;}
+.klist{display:flex;flex-direction:column;gap:8px;margin:-8px 0 0;}
+.krow{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:4px 10px 4px 4px;}
+.krow.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,transparent);}
+.kmain{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:0;background:none;cursor:pointer;font:inherit;color:inherit;padding:9px 10px;border-radius:11px;text-align:left;}
+.kmain:hover{background:color-mix(in srgb,var(--ink-faint) 13%,transparent);}
+.krow.on .kmain,.krow.on .kmain:hover{cursor:default;background:none;}
+.kname{font-weight:800;font-size:.95rem;}
+.kcode{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.7rem;color:var(--ink-faint);}
+.ktick{flex:none;color:var(--accent);font-weight:800;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;padding-right:5px;}
+.kforget{flex:none;border:0;background:none;cursor:pointer;color:var(--ink-faint);font-size:.95rem;line-height:1;padding:6px 7px;border-radius:9px;}
+.kforget:hover{color:#dc2626;background:color-mix(in srgb,#dc2626 12%,transparent);}
+.btn-wide{width:100%;text-align:center;justify-content:center;}
+.kempty{color:var(--ink-faint);font-size:.88rem;padding:2px 0 4px;}
 
 #editModal .sheet{width:min(1280px,100%);}
 
@@ -512,29 +525,33 @@ textarea{min-height:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospac
     </div>
     <div class="sheet-body">
       <p class="syncstate" id="syncState"><span class="syncdot"></span>Not set up</p>
-      <p class="hint" id="syncBlurb">Right now the schedule is saved in <strong>this browser only</strong>. Connect a free Firebase database and every device you set up stays in step — edit on your laptop and the smart board follows along.</p>
+      <p class="hint" id="syncBlurb">Right now the schedule is saved in <strong>this browser only</strong>.</p>
 
-      <label class="field"><span>Database URL</span>
-        <input type="text" id="syncDb" spellcheck="false" autocapitalize="off" placeholder="https://your-project-default-rtdb.firebaseio.com"></label>
-
-      <label class="field"><span>Class code <em>— this is the key to your schedule, keep it private</em></span></label>
-      <div class="syncrow" style="margin:-8px 0 16px">
-        <input type="text" id="syncRoom" spellcheck="false" autocapitalize="off" placeholder="press New">
-        <button class="btn" id="syncGen" title="Make a fresh code">🎲 New</button>
+      <div id="syncStart">
+        <button class="btn btn-primary btn-wide" id="syncStartBtn">☁️ Turn on syncing</button>
+        <p class="hint" style="margin:12px 0 0">Your schedule moves to the cloud so the smart board, your laptop and your phone all stay in step. It is free, there is no account to make and nothing to install.</p>
       </div>
 
-      <div class="syncactions" id="syncLinkRow" hidden>
-        <button class="btn" id="syncCopy">🔗 Copy setup link</button>
-        <span class="hint" style="margin:0">Open that link once on any other device to connect it.</span>
+      <div id="syncLive" hidden>
+        <label class="field" style="margin-bottom:12px"><span>Your classes</span></label>
+        <div class="klist" id="syncRooms"></div>
+        <div class="syncactions" style="margin:14px 0 16px">
+          <button class="btn" id="syncNew">＋ New class</button>
+          <button class="btn" id="syncCopy">🔗 Copy setup link</button>
+        </div>
+        <p class="hint" id="syncLinkHint">Open that link once on another device to connect it to the class you have open.</p>
       </div>
 
-      <details class="setup">
-        <summary>How to get a database URL — about 3 minutes, free</summary>
-        <ol>
-          <li>Go to <code>console.firebase.google.com</code> and press <strong>Add project</strong>. Name it anything; you can switch Google Analytics off.</li>
-          <li>In the left sidebar choose <strong>Build → Realtime Database → Create Database</strong>. Pick the region nearest you and <strong>Start in locked mode</strong>.</li>
-          <li>Open the <strong>Rules</strong> tab, replace everything with this, and press <strong>Publish</strong>:</li>
-        </ol>
+      <details class="setup" id="syncAdv">
+        <summary>Join a class, or use your own database</summary>
+        <label class="field" style="margin-top:14px"><span>Class code <em>— paste a code somebody shared with you</em></span></label>
+        <div class="syncrow" style="margin:-8px 0 16px">
+          <input type="text" id="syncRoom" spellcheck="false" autocapitalize="off" placeholder="16 letters and numbers">
+          <button class="btn" id="syncJoin">Join</button>
+        </div>
+        <label class="field"><span>Database URL <em>— leave this be unless you run your own Firebase</em></span>
+          <input type="text" id="syncDb" spellcheck="false" autocapitalize="off"></label>
+        <p class="hint">Self-hosting? Make a Realtime Database at <code>console.firebase.google.com</code>, publish these rules, then paste its URL above.</p>
         <pre id="syncRules">{
   "rules": {
     "rooms": {
@@ -546,18 +563,14 @@ textarea{min-height:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospac
   }
 }</pre>
         <button class="btn" id="syncCopyRules">Copy those rules</button>
-        <ol start="4" style="margin-top:12px">
-          <li>Open the <strong>Data</strong> tab and copy the URL shown at the top — it looks like <code>https://something-default-rtdb.firebaseio.com</code>.</li>
-          <li>Paste it above, press <strong>Connect</strong>, then use <strong>Copy setup link</strong> on your other devices.</li>
-        </ol>
-        <p class="hint" style="margin-bottom:0">Anyone holding the class code can read and change the schedule, so treat the setup link like a password. Nothing here is sensitive, but don’t post it publicly.</p>
+        <p class="hint" style="margin:12px 0 0">Anyone holding a class code can read and change that schedule, so treat the setup link like a password. Nothing here is sensitive, but don’t post it publicly.</p>
       </details>
     </div>
     <div class="sheet-foot">
       <button class="btn btn-danger" id="syncOff">Stop syncing</button>
       <span class="spacer"></span>
-      <button class="btn" id="syncCancel">Cancel</button>
-      <button class="btn btn-primary" id="syncSave">Connect</button>
+      <span class="spacer"></span>
+      <button class="btn btn-primary" id="syncCancel">Done</button>
     </div>
   </div>
 </div>
@@ -743,7 +756,10 @@ const JS_DAY    = {1:'mon',2:'tue',3:'wed',4:'thu',5:'fri'};
    STORAGE
    ======================================================================= */
 const LS_SCHEDULE='k5.schedule.v1', LS_TODAY='k5.today.v1', LS_DAYS='k5.days.v1', LS_SOUND='k5.sound.v1', LS_THEME='k5.theme.v1', LS_ZOOM='k5.zoom.v1';
-const LS_SYNC='k5.sync.v1', LS_DEV='k5.device.v1';
+const LS_SYNC='k5.sync.v1', LS_DEV='k5.device.v1', LS_ROOMS='k5.rooms.v1';
+/* One database backs the whole site. A class is just a room inside it, so
+   making another class is a button press, not a Firebase project. */
+const SYNC_DB = 'https://mrs-crittenden-classroom-default-rtdb.firebaseio.com';
 /* Cloud-sync state lives up here so the save hooks just below can call
    syncMark() without tripping over a temporal-dead-zone at module eval.
    syncBoot stays false until BOOT, so the prune-on-load save is a no-op. */
@@ -2138,7 +2154,7 @@ let syncRetryAt = 0;
 function loadSyncCfg(){
   try{
     const o = JSON.parse(localStorage.getItem(LS_SYNC) || 'null');
-    if(o && o.db && o.room) return {db:String(o.db), room:String(o.room)};
+    if(o && o.room) return {db:String(o.db || SYNC_DB), room:String(o.room)};
   }catch(e){}
   return null;
 }
@@ -2165,6 +2181,23 @@ function randCode(n){
   }
   return out;
 }
+/* The classes this device knows about. Local only — it is a bookmark list,
+   not shared state, so it never rides along with the synced payload. */
+function loadRooms(){
+  try{
+    const a = JSON.parse(localStorage.getItem(LS_ROOMS) || '[]');
+    return Array.isArray(a) ? a.filter(r => r && typeof r.code === 'string' && r.code) : [];
+  }catch(e){ return []; }
+}
+function saveRooms(a){ try{ localStorage.setItem(LS_ROOMS, JSON.stringify(a.slice(0,40))); }catch(e){} }
+function rememberRoom(code, name){
+  if(!code) return;
+  const a = loadRooms(), i = a.findIndex(r => r.code === code);
+  if(i >= 0){ if(name && a[i].name !== name){ a[i].name = name; saveRooms(a); } }
+  else { a.push({code:code, name:name || 'Class'}); saveRooms(a); }
+}
+function forgetRoom(code){ saveRooms(loadRooms().filter(r => r.code !== code)); }
+
 function deviceId(){
   let d = null;
   try{ d = localStorage.getItem(LS_DEV); }catch(e){}
@@ -2208,6 +2241,8 @@ function adoptRemote(r){
 }
 function applyRemote(r){
   adoptRemote(r);
+  if(syncCfg) rememberRoom(syncCfg.room, schedule.title);
+  renderRooms();
   undoStack = [];
   tlSig = null; lastScrolledIdx = -1; firstPaint = true;
   buildDayNav(); render();
@@ -2236,12 +2271,13 @@ function paintSyncUi(){
     st.innerHTML = '<span class="syncdot ' + cls + '"></span>' +
       esc(speak ? (syncMsg || 'Connected') : 'Not set up — this device only');
   }
-  const row = $('syncLinkRow'); if(row) row.hidden = !syncCfg;
-  const off = $('syncOff');     if(off) off.hidden = !syncOn;
+  const live = $('syncLive');  if(live) live.hidden = !syncOn;
+  const strt = $('syncStart'); if(strt) strt.hidden = syncOn;
+  const off  = $('syncOff');   if(off)  off.hidden  = !syncOn;
   const blurb = $('syncBlurb');
   if(blurb) blurb.innerHTML = syncOn
-    ? 'This schedule is shared with every device you have set up. Edit it anywhere and the rest catch up within half a minute. Use <strong>Copy setup link</strong> below to add another device.'
-    : 'Right now the schedule is saved in <strong>this browser only</strong>. Connect a free Firebase database and every device you set up stays in step — edit on your laptop and the smart board follows along.';
+    ? 'Every device you set up shares these schedules. Edit on your laptop and the smart board catches up within half a minute.'
+    : 'Right now the schedule is saved in <strong>this browser only</strong>, so it is stuck on this one computer.';
 }
 
 function syncQueuePush(){
@@ -2252,44 +2288,59 @@ function syncQueuePush(){
     if(syncOn && syncDirty && !syncBusy) syncPush();
   }, SYNC_PUSH_MS);
 }
+/* True while we are still on the class a request was fired for. Switching class
+   mid-flight would otherwise let one class's reply land on another. */
+function stillOn(room){ return syncOn && syncCfg && syncCfg.room === room; }
 function syncPush(){
   const url = syncUrl();
   if(!syncOn || syncBusy || !url) return;
+  const room = syncCfg.room;                    // she may switch class before this lands
   syncBusy = true; syncRetryAt = Date.now();
   const body = syncPayload();
   fetch(url, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)})
     .then(res => { if(!res.ok) throw new Error('HTTP ' + res.status); })
     .then(()=>{
+      if(!stillOn(room)) return;
       syncDirty = false; syncStamp = body.updatedAt;
+      rememberRoom(room, schedule.title); renderRooms();
       setSyncStatus('ok', 'Saved — every device is up to date');
     })
-    .catch(err => setSyncStatus('bad', netMsg(err)))
+    .catch(err => { if(stillOn(room)) setSyncStatus('bad', netMsg(err)); })
     .then(()=>{ syncBusy = false; });
 }
 function syncPull(force){
-  const url = syncUrl();
-  if(!syncOn || syncBusy || !url) return;
+  if(!syncOn || syncBusy || !syncCfg) return;
+  const room = syncCfg.room;
+  const base = syncCfg.db + '/rooms/' + encodeURIComponent(room);
   syncBusy = true;
-  fetch(url + '?_=' + Date.now(), {cache:'no-store'})
+  /* Read the timestamp on its own first. It is a couple of bytes against a
+     few kilobytes for the whole plan, and most polls find nothing new — which
+     matters now that every class on the site shares one database. */
+  fetch(base + '/updatedAt.json?_=' + Date.now(), {cache:'no-store'})
     .then(res => { if(!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-    .then(r => {
-      if(r === null || r === undefined){        // empty room: seed it from this device
+    .then(stamp => {
+      if(!stillOn(room)) return null;
+      stamp = +stamp || 0;
+      if(!stamp){                               // empty room: seed it from this device
         syncDirty = true; syncStamp = Date.now();
         setSyncStatus('ok', 'Connected — sending this schedule up');
+        return null;
+      }
+      if(!force && stamp <= syncStamp){ setSyncStatus('ok', 'Up to date'); return null; }
+      return fetch(base + '.json?_=' + Date.now(), {cache:'no-store'})
+        .then(res => { if(!res.ok) throw new Error('HTTP ' + res.status); return res.json(); });
+    })
+    .then(r => {
+      if(!r || typeof r !== 'object' || !stillOn(room)) return;  // nothing new, or handled above
+      if(dragging || anyModalOpen()){          // don't yank the UI out from under her
+        syncPendingRemote = r;
+        setSyncStatus('ok', 'A newer plan is waiting — finish up and it drops in');
         return;
       }
-      const stamp = +r.updatedAt || 0;
-      if(force || stamp > syncStamp){
-        if(dragging || anyModalOpen()){        // don't yank the UI out from under her
-          syncPendingRemote = r;
-          setSyncStatus('ok', 'A newer plan is waiting — finish up and it drops in');
-          return;
-        }
-        applyRemote(r);
-      }
+      applyRemote(r);
       setSyncStatus('ok', 'Up to date');
     })
-    .catch(err => setSyncStatus('bad', netMsg(err)))
+    .catch(err => { if(stillOn(room)) setSyncStatus('bad', netMsg(err)); })
     .then(()=>{ syncBusy = false; });
 }
 function syncTick(){
@@ -2313,15 +2364,77 @@ function connectSync(cfg){
   clearTimeout(syncPushT); syncPushT = null;
   syncDirty = false; syncBusy = false; syncStamp = 0;
   syncPendingRemote = null; syncPullAt = Date.now(); syncRetryAt = 0;
-  if(syncOn){ setSyncStatus('busy', 'Connecting…'); syncPull(true); }
+  if(syncOn){
+    rememberRoom(syncCfg.room);                 // name arrives with the first pull
+    setSyncStatus('busy', 'Connecting…');
+    syncPull(true);
+  }
   else setSyncStatus('off', '');
+  renderRooms();
+}
+
+/* Switching class or starting a fresh one both mean: stop talking to the old
+   room this instant, then let the pull decide what the new room holds. */
+function haltPush(){
+  clearTimeout(syncPushT); syncPushT = null;
+  syncOn = false; syncDirty = false;
+}
+function openClass(code){
+  if(!code || (syncOn && syncCfg && syncCfg.room === code)) return;
+  haltPush();
+  connectSync({db:(syncCfg && syncCfg.db) || SYNC_DB, room:code});
+}
+function nextClassName(){
+  const taken = loadRooms().map(r => (r.name || '').toLowerCase());
+  let n = loadRooms().length + 1;
+  while(taken.indexOf('class ' + n) >= 0) n++;
+  return 'Class ' + n;
+}
+function newClass(){
+  haltPush();
+  schedule = clone(DEFAULT_SCHEDULE);
+  schedule.title = nextClassName();          // so the list isn't five "Our Class" rows
+  dayOverrides = {};
+  try{
+    localStorage.setItem(LS_SCHEDULE, JSON.stringify(schedule));
+    localStorage.removeItem(LS_DAYS);
+  }catch(e){}
+  document.title = schedule.title;
+  undoStack = []; tlSig = null; lastScrolledIdx = -1; firstPaint = true;
+  connectSync({db:(syncCfg && syncCfg.db) || SYNC_DB, room:randCode(16)});
+  rememberRoom(syncCfg.room, schedule.title); renderRooms();
+  buildDayNav(); render();
+}
+function startSync(){
+  /* first run: the plan already on this device becomes the first class */
+  connectSync({db:SYNC_DB, room:randCode(16)});
+}
+
+function renderRooms(){
+  const box = $('syncRooms');
+  if(!box) return;
+  const rooms = loadRooms(), cur = syncCfg ? syncCfg.room : '';
+  if(!rooms.length){ box.innerHTML = '<p class="kempty">No classes yet.</p>'; return; }
+  box.innerHTML = rooms.map(r => {
+    const on = r.code === cur;
+    return '<div class="krow' + (on ? ' on' : '') + '">' +
+      '<button class="kmain" data-open="' + esc(r.code) + '">' +
+        '<span class="kname">' + esc(r.name || 'Class') + '</span>' +
+        '<span class="kcode">' + esc(r.code) + '</span>' +
+      '</button>' +
+      (on ? '<span class="ktick">Open</span>'
+          : '<button class="kforget" data-forget="' + esc(r.code) +
+            '" title="Take this class off this device">✕</button>') +
+    '</div>';
+  }).join('');
 }
 
 /* one-tap setup for the next device */
 function syncLink(){
   if(!syncCfg) return '';
   try{
-    const b = btoa(JSON.stringify(syncCfg)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    const cfg = (syncCfg.db === SYNC_DB) ? {room:syncCfg.room} : syncCfg;
+    const b = btoa(JSON.stringify(cfg)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     return location.origin + location.pathname + '?sync=' + b;
   }catch(e){ return ''; }
 }
@@ -2330,7 +2443,7 @@ function syncCfgFromUrl(){
   if(!q) return null;
   try{
     const j = JSON.parse(atob(q.replace(/-/g,'+').replace(/_/g,'/')));
-    if(j && j.db && j.room) return {db:normDb(j.db), room:String(j.room)};
+    if(j && j.room) return {db:normDb(j.db) || SYNC_DB, room:String(j.room)};
   }catch(e){}
   return null;
 }
@@ -2364,11 +2477,11 @@ function copyText(t, btn, okLabel){
 
 const sm = {modal:$('syncModal'), db:$('syncDb'), room:$('syncRoom')};
 function openSyncModal(){
-  sm.db.value   = syncCfg ? syncCfg.db   : '';
-  sm.room.value = syncCfg ? syncCfg.room : '';
-  paintSyncUi();
+  sm.db.value   = (syncCfg && syncCfg.db) || SYNC_DB;
+  sm.room.value = '';
+  paintSyncUi(); renderRooms();
   sm.modal.classList.add('open');
-  setTimeout(()=>{ (syncCfg ? sm.room : sm.db).focus(); }, 30);
+  setTimeout(()=>{ const b = $(syncOn ? 'syncNew' : 'syncStartBtn'); if(b) b.focus(); }, 30);
 }
 function closeSyncModal(){ sm.modal.classList.remove('open'); }
 
@@ -2378,18 +2491,25 @@ $('syncCancel').onclick = closeSyncModal;
 sm.modal.addEventListener('click', e => { if(e.target === sm.modal) closeSyncModal(); });
 sm.modal.addEventListener('keydown', e => { if(e.key === 'Escape') closeSyncModal(); });
 
-$('syncGen').onclick = ()=>{ sm.room.value = randCode(16); };
+$('syncStartBtn').onclick = startSync;
+$('syncNew').onclick      = newClass;
 
-$('syncSave').onclick = ()=>{
-  const db = normDb(sm.db.value);
-  if(!db){ setSyncStatus('bad', 'Paste your database URL first'); sm.db.focus(); return; }
-  let room = String(sm.room.value || '').trim().replace(/[^a-z0-9_-]/gi, '');
-  if(!room) room = randCode(16);
-  else if(room.length < 12){
-    setSyncStatus('bad', 'That class code is too short — press 🎲 New');
+$('syncRooms').addEventListener('click', e => {
+  const go = e.target.closest('[data-open]');
+  if(go){ openClass(go.getAttribute('data-open')); return; }
+  const drop = e.target.closest('[data-forget]');
+  if(drop){ forgetRoom(drop.getAttribute('data-forget')); renderRooms(); }
+});
+
+$('syncJoin').onclick = ()=>{
+  const db = normDb(sm.db.value) || SYNC_DB;
+  const room = String(sm.room.value || '').trim().replace(/[^a-z0-9_-]/gi, '');
+  if(room.length < 12){
+    setSyncStatus('bad', 'That class code looks too short — they are 16 characters');
     sm.room.focus(); return;
   }
-  sm.db.value = db; sm.room.value = room;
+  sm.room.value = '';
+  haltPush();
   connectSync({db:db, room:room});
 };
 $('syncOff').onclick = ()=>{ connectSync(null); };
@@ -2408,7 +2528,9 @@ render();
 syncBoot = true;
 const bootSync = syncCfgFromUrl();
 if(bootSync) stripSyncParam();
-connectSync(bootSync || loadSyncCfg());
+const savedSync = loadSyncCfg();
+if(savedSync) rememberRoom(savedSync.room, schedule.title);   // installs from before the class list
+connectSync(bootSync || savedSync);
 
 setTimeout(autoScroll, 350);
 setInterval(repaint, 1000);
