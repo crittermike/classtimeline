@@ -10,6 +10,6 @@ schedule.
 
 Optional cloud sync keeps the same schedule on every device in the room.
 
-**Live:** https://crittermike.github.io/classtimeline/
+**Live:** https://classtimeline.com
 
 Zero build step. The whole app is one `index.html`.
