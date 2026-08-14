@@ -337,17 +337,7 @@ select.btn{appearance:none;padding-right:1.6rem;
 #syncBtn.on{background:color-mix(in srgb,var(--done) 18%,transparent);border-color:color-mix(in srgb,var(--done) 45%,transparent);}
 #syncBtn.bad{background:color-mix(in srgb,#dc2626 16%,transparent);border-color:color-mix(in srgb,#dc2626 48%,transparent);}
 .syncstate{display:flex;align-items:center;margin:0 0 14px;font-size:.9rem;font-weight:800;}
-.syncrow{display:flex;gap:8px;align-items:center;}
-.syncrow input{flex:1;min-width:0;}
-.syncrow .btn{flex:none;white-space:nowrap;}
-#syncRoom,#syncDb{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;}
-.field em{font-style:normal;font-weight:600;opacity:.72;text-transform:none;letter-spacing:0;}
 .syncactions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-2px 0 16px;}
-.setup{border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:.86rem;}
-.setup summary{cursor:pointer;font-weight:800;}
-.setup ol{margin:12px 0 10px;padding-left:1.2rem;line-height:1.8;}
-.setup code{background:color-mix(in srgb,var(--ink-faint) 20%,transparent);padding:.1rem .35rem;border-radius:6px;font-size:.92em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
-.setup pre{background:color-mix(in srgb,var(--ink-faint) 13%,transparent);border-radius:10px;padding:10px 12px;overflow:auto;font-size:.74rem;line-height:1.5;margin:0 0 10px;}
 .klist{display:flex;flex-direction:column;gap:8px;margin:-8px 0 0;}
 .krow{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:4px 10px 4px 4px;}
 .krow.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,transparent);}
@@ -355,7 +345,6 @@ select.btn{appearance:none;padding-right:1.6rem;
 .kmain:hover{background:color-mix(in srgb,var(--ink-faint) 13%,transparent);}
 .krow.on .kmain,.krow.on .kmain:hover{cursor:default;background:none;}
 .kname{font-weight:800;font-size:.95rem;}
-.kcode{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.7rem;color:var(--ink-faint);}
 .ktick{flex:none;color:var(--accent);font-weight:800;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;padding-right:5px;}
 .kforget{flex:none;border:0;background:none;cursor:pointer;color:var(--ink-faint);font-size:.95rem;line-height:1;padding:6px 7px;border-radius:9px;}
 .kforget:hover{color:#dc2626;background:color-mix(in srgb,#dc2626 12%,transparent);}
@@ -537,34 +526,11 @@ textarea{min-height:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospac
         <div class="klist" id="syncRooms"></div>
         <div class="syncactions" style="margin:14px 0 16px">
           <button class="btn" id="syncNew">＋ New class</button>
-          <button class="btn" id="syncCopy">🔗 Copy setup link</button>
+          <button class="btn" id="syncCopy">🔗 Copy link to this class</button>
         </div>
-        <p class="hint" id="syncLinkHint">Open that link once on another device to connect it to the class you have open.</p>
+        <p class="hint" id="syncLinkHint">The web address up in your browser bar <strong>is</strong> this class. Open it on another device, or send it to another teacher, and you are both looking at the same schedule. Anyone with the link can change it, so share it with people you trust.</p>
       </div>
 
-      <details class="setup" id="syncAdv">
-        <summary>Join a class, or use your own database</summary>
-        <label class="field" style="margin-top:14px"><span>Class code <em>— paste a code somebody shared with you</em></span></label>
-        <div class="syncrow" style="margin:-8px 0 16px">
-          <input type="text" id="syncRoom" spellcheck="false" autocapitalize="off" placeholder="16 letters and numbers">
-          <button class="btn" id="syncJoin">Join</button>
-        </div>
-        <label class="field"><span>Database URL <em>— leave this be unless you run your own Firebase</em></span>
-          <input type="text" id="syncDb" spellcheck="false" autocapitalize="off"></label>
-        <p class="hint">Self-hosting? Make a Realtime Database at <code>console.firebase.google.com</code>, publish these rules, then paste its URL above.</p>
-        <pre id="syncRules">{
-  "rules": {
-    "rooms": {
-      "$room": {
-        ".read": "$room.length >= 12",
-        ".write": "$room.length >= 12"
-      }
-    }
-  }
-}</pre>
-        <button class="btn" id="syncCopyRules">Copy those rules</button>
-        <p class="hint" style="margin:12px 0 0">Anyone holding a class code can read and change that schedule, so treat the setup link like a password. Nothing here is sensitive, but don’t post it publicly.</p>
-      </details>
     </div>
     <div class="sheet-foot">
       <button class="btn btn-danger" id="syncOff">Stop syncing</button>
@@ -2161,12 +2127,6 @@ function loadSyncCfg(){
 function saveSyncCfg(c){
   try{ c ? localStorage.setItem(LS_SYNC, JSON.stringify(c)) : localStorage.removeItem(LS_SYNC); }catch(e){}
 }
-function normDb(u){
-  let s = String(u||'').trim();
-  if(!s) return '';
-  if(!/^https?:\/\//i.test(s)) s = 'https://' + s;
-  return s.replace(/\.json$/i,'').replace(/\/+$/,'');
-}
 function syncUrl(){
   return syncCfg ? syncCfg.db + '/rooms/' + encodeURIComponent(syncCfg.room) + '.json' : '';
 }
@@ -2370,7 +2330,7 @@ function connectSync(cfg){
     syncPull(true);
   }
   else setSyncStatus('off', '');
-  renderRooms();
+  renderRooms(); syncUrlBar();
 }
 
 /* Switching class or starting a fresh one both mean: stop talking to the old
@@ -2420,7 +2380,6 @@ function renderRooms(){
     return '<div class="krow' + (on ? ' on' : '') + '">' +
       '<button class="kmain" data-open="' + esc(r.code) + '">' +
         '<span class="kname">' + esc(r.name || 'Class') + '</span>' +
-        '<span class="kcode">' + esc(r.code) + '</span>' +
       '</button>' +
       (on ? '<span class="ktick">Open</span>'
           : '<button class="kforget" data-forget="' + esc(r.code) +
@@ -2429,29 +2388,30 @@ function renderRooms(){
   }).join('');
 }
 
-/* one-tap setup for the next device */
+/* Sharing is just sharing the address, so the address always names the class on
+   screen. Clean link — no ?date=/?t= riding along to the next teacher. */
 function syncLink(){
-  if(!syncCfg) return '';
-  try{
-    const cfg = (syncCfg.db === SYNC_DB) ? {room:syncCfg.room} : syncCfg;
-    const b = btoa(JSON.stringify(cfg)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-    return location.origin + location.pathname + '?sync=' + b;
-  }catch(e){ return ''; }
+  return syncCfg ? location.origin + location.pathname + '?c=' + encodeURIComponent(syncCfg.room) : '';
 }
+function cleanCode(s){ return String(s || '').trim().replace(/[^a-z0-9_-]/gi, ''); }
 function syncCfgFromUrl(){
-  const q = params.get('sync');
-  if(!q) return null;
-  try{
+  const c = cleanCode(params.get('c'));
+  if(c.length >= 12) return {db:SYNC_DB, room:c};
+  const q = params.get('sync');                 // links handed out before the address bar carried the class
+  if(q) try{
     const j = JSON.parse(atob(q.replace(/-/g,'+').replace(/_/g,'/')));
-    if(j && j.room) return {db:normDb(j.db) || SYNC_DB, room:String(j.room)};
+    if(j && j.room) return {db:String(j.db || SYNC_DB), room:String(j.room)};
   }catch(e){}
   return null;
 }
-function stripSyncParam(){
+/* Keep ?c= in step with whatever class is open; everything else in the query
+   string is left exactly as it was. */
+function syncUrlBar(){
   try{
     const u = new URL(location.href);
-    if(!u.searchParams.has('sync')) return;
     u.searchParams.delete('sync');
+    if(syncOn && syncCfg) u.searchParams.set('c', syncCfg.room);
+    else u.searchParams.delete('c');
     const qs = u.searchParams.toString();
     history.replaceState(null, '', u.pathname + (qs ? '?' + qs : '') + u.hash);
   }catch(e){}
@@ -2475,10 +2435,8 @@ function copyText(t, btn, okLabel){
   catch(e){ fallback(); }
 }
 
-const sm = {modal:$('syncModal'), db:$('syncDb'), room:$('syncRoom')};
+const sm = {modal:$('syncModal')};
 function openSyncModal(){
-  sm.db.value   = (syncCfg && syncCfg.db) || SYNC_DB;
-  sm.room.value = '';
   paintSyncUi(); renderRooms();
   sm.modal.classList.add('open');
   setTimeout(()=>{ const b = $(syncOn ? 'syncNew' : 'syncStartBtn'); if(b) b.focus(); }, 30);
@@ -2501,20 +2459,8 @@ $('syncRooms').addEventListener('click', e => {
   if(drop){ forgetRoom(drop.getAttribute('data-forget')); renderRooms(); }
 });
 
-$('syncJoin').onclick = ()=>{
-  const db = normDb(sm.db.value) || SYNC_DB;
-  const room = String(sm.room.value || '').trim().replace(/[^a-z0-9_-]/gi, '');
-  if(room.length < 12){
-    setSyncStatus('bad', 'That class code looks too short — they are 16 characters');
-    sm.room.focus(); return;
-  }
-  sm.room.value = '';
-  haltPush();
-  connectSync({db:db, room:room});
-};
-$('syncOff').onclick = ()=>{ connectSync(null); };
-$('syncCopy').onclick      = e => { const l = syncLink(); if(l) copyText(l, e.currentTarget, '✓ Link copied'); };
-$('syncCopyRules').onclick = e => copyText($('syncRules').textContent, e.currentTarget, '✓ Rules copied');
+$('syncOff').onclick  = ()=>{ connectSync(null); };
+$('syncCopy').onclick = e => { const l = syncLink(); if(l) copyText(l, e.currentTarget, '✓ Link copied'); };
 
 /* =======================================================================
    BOOT
@@ -2524,10 +2470,9 @@ syncSoundBtn();
 document.title = schedule.title;
 render();
 
-/* cloud sync: a ?sync= setup link wins, otherwise whatever this device saved */
+/* cloud sync: a shared link wins, otherwise whatever this device saved */
 syncBoot = true;
 const bootSync = syncCfgFromUrl();
-if(bootSync) stripSyncParam();
 const savedSync = loadSyncCfg();
 if(savedSync) rememberRoom(savedSync.room, schedule.title);   // installs from before the class list
 connectSync(bootSync || savedSync);
