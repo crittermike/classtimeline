@@ -51,6 +51,30 @@ button{font-family:inherit;cursor:pointer;}
 /* ---------- shell ---------- */
 .app{height:100vh;height:100dvh;display:flex;flex-direction:column;padding:clamp(12px,1.4vw,22px);gap:clamp(10px,1.1vw,16px);}
 
+/* ---------- home / launcher ----------
+   Bare address = the front door: start a class, or pick one you've opened
+   before. A class link (?c=) skips straight past this into the board. */
+#home{display:none;}
+html.home-mode .app{display:none;}
+html.home-mode body{overflow:auto;}
+html.home-mode #home{display:block;}
+.home{min-height:100dvh;padding:clamp(24px,5vh,64px) 20px 64px;}
+.home-inner{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:20px;}
+.home-card{background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:clamp(26px,4vw,44px);text-align:center;}
+.home-logo{font-size:2.9rem;line-height:1;}
+.home-title{font-size:clamp(1.7rem,4vw,2.4rem);margin:12px 0 0;letter-spacing:-.01em;}
+.home-sub{margin:12px 0 0;color:var(--ink-soft);font-weight:600;line-height:1.55;}
+.home-new{width:100%;justify-content:center;margin-top:24px;font-size:1.05rem;padding:.85rem 1rem;border-radius:14px;}
+.home-note{margin:16px 0 0;color:var(--ink-faint);font-weight:700;font-size:.82rem;}
+.home-recent{background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);padding:clamp(18px,2.6vw,26px);}
+.home-label{font-weight:800;font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);margin:0 0 12px;}
+.home-list{display:flex;flex-direction:column;gap:8px;}
+.hrow{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:14px;padding:4px 10px 4px 4px;}
+.hmain{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:0;background:none;font:inherit;color:inherit;padding:10px;border-radius:11px;text-align:left;}
+.hmain:hover{background:color-mix(in srgb,var(--ink-faint) 13%,transparent);}
+.hname{font-weight:800;font-size:1rem;}
+.hwhen{font-size:.78rem;color:var(--ink-faint);font-weight:700;}
+
 /* ---------- top bar ---------- */
 .topbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
 .brand{display:flex;align-items:center;gap:14px;min-width:0;flex:1;}
@@ -426,6 +450,11 @@ textarea{min-height:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospac
 }
 @media print{ .controls,.dayprogress{display:none;} }
 </style>
+<script>
+/* Paint hint only, so the board doesn't flash the wrong screen. The real
+   decision is made at the bottom of the page once storage has been read. */
+try{ if(!/[?&](c|sync)=/.test(location.search)) document.documentElement.classList.add('home-mode'); }catch(e){}
+</script>
 </head>
 <body>
 <div class="app">
@@ -446,6 +475,7 @@ textarea{min-height:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospac
         </span>
         <button class="btn" id="soundBtn" title="Chime when activities change">🔕</button>
         <button class="btn" id="themeBtn" title="Light / dark">🌙</button>
+        <button class="btn" id="homeBtn" title="All your classes">🏠</button>
         <button class="btn" id="syncBtn" title="Sync this schedule across devices">☁️</button>
         <button class="btn" id="editBtn" title="Edit the normal weekly schedule">✏️ Week</button>
         <button class="btn" id="fsBtn" title="Full screen">⛶</button>
@@ -472,6 +502,23 @@ textarea{min-height:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospac
       <div class="tl-scroll" id="tlScroll"><div class="tl" id="timeline"></div></div>
     </section>
   </main>
+</div>
+
+<!-- ============ front door ============ -->
+<div class="home" id="home">
+  <div class="home-inner">
+    <div class="home-card">
+      <div class="home-logo">🗓️</div>
+      <h1 class="home-title">Class Timeline</h1>
+      <p class="home-sub">A living schedule for the classroom board — what's happening now, how much time is left, and what's coming next.</p>
+      <button class="btn btn-primary home-new" id="homeNew">＋ New class</button>
+      <p class="home-note">Free · no account · nothing to install</p>
+    </div>
+    <div class="home-recent" id="homeRecent" hidden>
+      <p class="home-label">Your classes</p>
+      <div class="home-list" id="homeList"></div>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"><span class="toast-msg"></span><button class="toast-undo" id="toastUndo">Undo</button></div>
@@ -533,7 +580,7 @@ textarea{min-height:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospac
 
     </div>
     <div class="sheet-foot">
-      <button class="btn btn-danger" id="syncOff">Stop syncing</button>
+      <button class="btn btn-danger" id="syncOff">Leave this class</button>
       <span class="spacer"></span>
       <span class="spacer"></span>
       <button class="btn btn-primary" id="syncCancel">Done</button>
@@ -1547,7 +1594,7 @@ function autoScroll(force){
   sc.scrollTo({top: Math.max(0, y - vh*0.42), behavior: didFirstScroll ? 'smooth' : 'auto'});
   didFirstScroll = true;
 }
-function repaint(){ syncTick(); if(dragging) return; render(); autoScroll(); }
+function repaint(){ if(atHome()) return; syncTick(); if(dragging) return; render(); autoScroll(); }
 
 /* =======================================================================
    TODAY-ONLY BLOCK EDITOR
@@ -2152,9 +2199,16 @@ function loadRooms(){
 function saveRooms(a){ try{ localStorage.setItem(LS_ROOMS, JSON.stringify(a.slice(0,40))); }catch(e){} }
 function rememberRoom(code, name){
   if(!code) return;
-  const a = loadRooms(), i = a.findIndex(r => r.code === code);
-  if(i >= 0){ if(name && a[i].name !== name){ a[i].name = name; saveRooms(a); } }
-  else { a.push({code:code, name:name || 'Class'}); saveRooms(a); }
+  const a = loadRooms(), i = a.findIndex(r => r.code === code), now = Date.now();
+  if(i >= 0){
+    let touched = false;
+    if(name && a[i].name !== name){ a[i].name = name; touched = true; }
+    /* "last opened" on the front door. Nudged at most once a minute so a busy
+       editing session isn't writing storage every second. */
+    if(now - (+a[i].seen || 0) > 60000){ a[i].seen = now; touched = true; }
+    if(touched) saveRooms(a);
+  }
+  else { a.push({code:code, name:name || 'Class', seen:now}); saveRooms(a); }
 }
 function forgetRoom(code){ saveRooms(loadRooms().filter(r => r.code !== code)); }
 
@@ -2345,6 +2399,7 @@ function openClass(code){
   connectSync({db:(syncCfg && syncCfg.db) || SYNC_DB, room:code});
 }
 function nextClassName(){
+  if(!loadRooms().length) return DEFAULT_SCHEDULE.title;   // the very first one
   const taken = loadRooms().map(r => (r.name || '').toLowerCase());
   let n = loadRooms().length + 1;
   while(taken.indexOf('class ' + n) >= 0) n++;
@@ -2387,6 +2442,71 @@ function renderRooms(){
     '</div>';
   }).join('');
 }
+
+/* =======================================================================
+   FRONT DOOR
+   ======================================================================= */
+function atHome(){ return document.documentElement.classList.contains('home-mode'); }
+function hasLocalPlan(){ try{ return !!localStorage.getItem(LS_SCHEDULE); }catch(e){ return false; } }
+
+function relTime(t){
+  if(!t) return '';
+  const s = Math.floor((Date.now() - t) / 1000);
+  if(s < 90) return 'just now';
+  const m = Math.floor(s / 60);  if(m < 60) return m + ' min ago';
+  const hr = Math.floor(m / 60); if(hr < 24) return hr === 1 ? 'an hour ago' : hr + ' hours ago';
+  const d = Math.floor(hr / 24); if(d < 7)  return d === 1 ? 'yesterday' : d + ' days ago';
+  try{ return new Date(t).toLocaleDateString(); }catch(e){ return ''; }
+}
+
+function renderHome(){
+  const box = $('homeList'), wrap = $('homeRecent');
+  if(!box || !wrap) return;
+  const rooms = loadRooms().slice().sort((a,b) => (+b.seen || 0) - (+a.seen || 0));
+  let rows = rooms.map(r =>
+    '<div class="hrow">' +
+      '<button class="hmain" data-open="' + esc(r.code) + '">' +
+        '<span class="hname">' + esc(r.name || 'Class') + '</span>' +
+        '<span class="hwhen">' + esc(relTime(+r.seen || 0) || 'opened before') + '</span>' +
+      '</button>' +
+      '<button class="kforget" data-forget="' + esc(r.code) +
+        '" title="Take this class off this device">✕</button>' +
+    '</div>').join('');
+  /* Someone who used this before there were classes still has their plan sitting
+     in this browser. Offer it back instead of quietly stranding it. */
+  if(!rooms.length && hasLocalPlan()){
+    rows = '<div class="hrow">' +
+      '<button class="hmain" data-adopt="1">' +
+        '<span class="hname">' + esc(schedule.title || 'Our Class') + '</span>' +
+        '<span class="hwhen">saved on this device — tap to keep going</span>' +
+      '</button>' +
+    '</div>';
+  }
+  wrap.hidden = !rows;
+  box.innerHTML = rows;
+}
+
+function showHome(){
+  document.documentElement.classList.add('home-mode');
+  document.title = 'Class Timeline';
+  renderHome();
+}
+function leaveHome(){
+  document.documentElement.classList.remove('home-mode');
+  tlSig = null; lastScrolledIdx = -1; firstPaint = true;
+  buildDayNav(); render();
+  setTimeout(()=>autoScroll(true), 60);
+}
+
+$('homeNew').onclick = ()=>{ newClass(); leaveHome(); };
+$('homeBtn').onclick = ()=>{ location.href = location.origin + location.pathname; };
+$('homeList').addEventListener('click', e => {
+  const go = e.target.closest('[data-open]');
+  if(go){ openClass(go.getAttribute('data-open')); leaveHome(); return; }
+  if(e.target.closest('[data-adopt]')){ startSync(); leaveHome(); return; }
+  const drop = e.target.closest('[data-forget]');
+  if(drop){ forgetRoom(drop.getAttribute('data-forget')); renderHome(); }
+});
 
 /* Sharing is just sharing the address, so the address always names the class on
    screen. Clean link — no ?date=/?t= riding along to the next teacher. */
@@ -2459,7 +2579,7 @@ $('syncRooms').addEventListener('click', e => {
   if(drop){ forgetRoom(drop.getAttribute('data-forget')); renderRooms(); }
 });
 
-$('syncOff').onclick  = ()=>{ connectSync(null); };
+$('syncOff').onclick  = ()=>{ connectSync(null); closeSyncModal(); showHome(); };
 $('syncCopy').onclick = e => { const l = syncLink(); if(l) copyText(l, e.currentTarget, '✓ Link copied'); };
 
 /* =======================================================================
@@ -2470,12 +2590,14 @@ syncSoundBtn();
 document.title = schedule.title;
 render();
 
-/* cloud sync: a shared link wins, otherwise whatever this device saved */
+/* A class link opens that class. A bare address opens the front door, which is
+   the only way back to the list once you have more than one. */
 syncBoot = true;
 const bootSync = syncCfgFromUrl();
 const savedSync = loadSyncCfg();
 if(savedSync) rememberRoom(savedSync.room, schedule.title);   // installs from before the class list
-connectSync(bootSync || savedSync);
+if(bootSync) connectSync(bootSync);
+else showHome();
 
 setTimeout(autoScroll, 350);
 setInterval(repaint, 1000);
