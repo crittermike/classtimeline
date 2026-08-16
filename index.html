@@ -398,33 +398,6 @@ select.btn{appearance:none;padding-right:1.6rem;
 
 #editModal .sheet{width:min(1280px,100%);}
 
-/* ---------- weekly editor: a drag-editable copy of the timeline ---------- */
-.ed-split{display:grid;grid-template-columns:minmax(280px,.82fr) minmax(430px,1.18fr);gap:20px;align-items:start;}
-@media (max-width:940px){.ed-split{grid-template-columns:1fr;}}
-.ed-pane-h{display:flex;align-items:center;gap:10px;margin:0 0 8px;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-faint);}
-.ed-pane-h .sp{margin-left:auto;}
-.ed-pane-h .btn{padding:.28rem .7rem;font-size:.76rem;text-transform:none;letter-spacing:0;}
-.ed-tl-scroll{
-  position:relative;overflow-y:auto;overscroll-behavior:contain;
-  height:clamp(340px,58vh,620px);
-  border:1px solid var(--line);border-radius:16px;background:var(--bg);
-  padding:12px 14px 12px 0;
-}
-.ed-tl-scroll::-webkit-scrollbar{width:9px;}
-.ed-tl-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px;}
-.ed-tl{--gut:66px;}
-.ed-tl .tl-hr b{padding-right:12px;font-size:.68rem;}
-.ed-tl .blk .blk-in{gap:7px;padding:0 10px 0 15px;}
-.ed-tl .blk .em{font-size:1.08rem;}
-.ed-tl .blk .nm{font-size:.9rem;}
-.ed-tl .blk .tm{font-size:.64rem;}
-.ed-tl .blk .len{font-size:.75rem;}
-.ed-tl .gap span{font-size:.68rem;}
-.ed-tl .blk.live.locked{cursor:grab;}   /* the template is where a locked time gets set */
-.ed-tl .blk.sel{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 62%,transparent),0 1px 2px rgba(22,35,58,.05);}
-.etable tr.sel td{background:color-mix(in srgb,var(--accent) 11%,transparent);}
-.etable tr.sel td:first-child{border-radius:9px 0 0 9px;}
-.etable tr.sel td:last-child{border-radius:0 9px 9px 0;}
 .sheet-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;}
 .sheet-head h2{font-size:1.3rem;display:flex;align-items:center;gap:.5rem;min-width:0;}
 .sheet-head h2 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -446,17 +419,7 @@ input[type=text],input[type=time],select,textarea{
 input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}
 .check{display:flex;align-items:flex-start;gap:.6rem;font-size:.88rem;font-weight:700;color:var(--ink-soft);line-height:1.4;cursor:pointer;}
 .check input{width:1.1rem;height:1.1rem;margin-top:.1rem;flex:none;accent-color:var(--accent);}
-.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
-.tab{border:1px solid var(--line);background:var(--bg);color:var(--ink-soft);border-radius:10px;padding:.45rem .85rem;font-weight:800;font-size:.9rem;}
-.tab.on{background:var(--accent);border-color:var(--accent);color:#fff;}
-.etable{width:100%;border-collapse:collapse;}
-.etable th{text-align:left;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);padding:0 6px 8px;}
-.etable td{padding:3px 6px;vertical-align:middle;}
-.icon-btn{border:none;background:transparent;color:var(--ink-faint);font-size:1.1rem;padding:.3rem .45rem;border-radius:8px;line-height:1;}
-.icon-btn:hover{background:var(--bg);color:#dc2626;}
 .hint{font-size:.85rem;color:var(--ink-soft);font-weight:600;margin:0 0 14px;line-height:1.5;}
-.warnbox{background:color-mix(in srgb,var(--amber) 15%,transparent);border:1px solid color-mix(in srgb,var(--amber) 45%,transparent);border-radius:12px;padding:10px 14px;font-size:.85rem;font-weight:700;margin-bottom:14px;line-height:1.5;}
-.warnbox:empty{display:none;}
 textarea{min-height:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem;line-height:1.5;resize:vertical;}
 
 .preview-flag{
@@ -508,6 +471,54 @@ html.wk-open #wkPrint{
 .wkb{display:flex;gap:8px;padding:calc(6px*var(--wks)) 9px calc(6px*var(--wks)) 0;
   border-top:1px solid #eff3f9;}
 .wkb:first-child{border-top:0;}
+/* ---- week grid editor (5 real days side by side) ---- */
+.wgbar{display:flex;align-items:center;gap:8px;margin:2px 0 10px}
+.wgbar .sp{flex:1}
+.wgbar #wgRange{font-size:15px;letter-spacing:.2px}
+.wgwrap{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel)}
+.wghead,.wggrid{display:grid;grid-template-columns:54px repeat(5,minmax(0,1fr));gap:0}
+.wghead{border-bottom:1px solid var(--line);background:var(--bg)}
+.wgscroll{padding-top:7px;max-height:min(52vh,520px);overflow:auto;scrollbar-gutter:stable}
+.wgdh{padding:8px 8px 7px;text-align:center;border-left:1px solid var(--line);min-width:0}
+.wgdh:first-child{border-left:0}
+.wgdh b{display:block;font-size:13px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wgdh span{display:block;font-size:11px;color:var(--ink-faint);font-weight:700;margin-top:1px}
+.wgdh.wgtoday b{color:var(--accent)}
+.wgdh.wgover span::after{content:" \2022 changed";color:var(--amber)}
+.wggutter{position:relative}
+.wggutter .wgt{position:absolute;right:6px;transform:translateY(-50%);padding-top:1px;font-size:10.5px;font-weight:700;color:var(--ink-faint);white-space:nowrap}
+.wgcol{position:relative;border-left:1px solid var(--line);min-width:0;cursor:copy}
+.wgline{position:absolute;left:0;right:0;height:1px;background:var(--line);pointer-events:none}
+.wgline.half{opacity:.45}
+.wgb{position:absolute;border-radius:9px;background:var(--panel);border:1px solid var(--line);
+  border-left:4px solid var(--c);box-shadow:0 1px 2px rgba(20,35,70,.07);overflow:hidden;
+  padding:3px 5px 3px 6px;cursor:grab;touch-action:none;min-width:0}
+.wgb:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.wgb.dragging{cursor:grabbing;box-shadow:0 8px 20px rgba(20,35,70,.2);z-index:6;opacity:.95}
+.wgb.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.28)}
+.wgb .wgn{display:block;font-size:11.5px;font-weight:800;line-height:1.15;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wgb .wgm{display:block;font-size:10px;font-weight:700;color:var(--ink-faint);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.wgb.tiny{padding:1px 4px 1px 5px}
+.wgb.tiny .wgm{display:none}
+.wgb.tiny .wgn{font-size:10.5px}
+.wgb .wglk{font-size:9px;opacity:.8}
+.wgb .wgrip{position:absolute;left:0;right:0;bottom:0;height:8px;cursor:ns-resize}
+.wgb .wgrip::after{content:"";position:absolute;left:50%;bottom:2px;transform:translateX(-50%);
+  width:16px;height:2px;border-radius:2px;background:var(--line)}
+.wgb:hover .wgrip::after{background:var(--ink-faint)}
+.wgsel{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin-top:12px;padding:12px;
+  border:1px solid var(--line);border-radius:14px;background:var(--bg)}
+.wgsel .field{margin:0;flex:1 1 190px;min-width:0}
+.wgsel .field.sm{flex:0 0 120px}
+.wgchk{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft);
+  padding-bottom:9px;white-space:nowrap}
+@media (max-width:760px){
+  .wghead,.wggrid{grid-template-columns:44px repeat(5,minmax(0,1fr))}
+  .wgdh b{font-size:11.5px}
+  .wgsel .field{flex:1 1 140px}
+}
 .wkrule{flex:none;width:4px;border-radius:0 3px 3px 0;background:#94a3b8;}
 .wkb.wksame{margin-left:calc(11px * var(--wks,1));}
 .wkb.wksame .wkrule{opacity:.55;}
@@ -713,31 +724,37 @@ try{ if(!/[?&](c|sync)=/.test(location.search)) document.documentElement.classLi
 <div class="modal" id="editModal">
   <div class="sheet">
     <div class="sheet-head">
-      <h2>✏️ The normal weekly schedule</h2>
+      <h2>✏️ Plan the week</h2>
       <button class="btn" id="closeEdit">Close</button>
     </div>
     <div class="sheet-body">
       <div id="editMain">
         <label class="field"><span>Title shown at the top</span><input type="text" id="titleInput" placeholder="Mrs. Smith's Kindergarten"></label>
-        <div class="tabs" id="dayTabs"></div>
-        <div class="warnbox" id="warnBox"></div>
-        <p class="hint">This is the permanent week-in-week-out plan. <strong>Drag a block up or down to move it</strong> (drag it past a neighbour to reorder), or <strong>pull its bottom edge</strong> to make it longer or shorter — everything else slides out of the way. Tap a block to rename it. For one-off changes (an activity running long, a surprise assembly) close this and tap a block on the main timeline instead. Tick <strong>🔒</strong> on anything that never moves — locked times can't be dragged or pushed around out on the main timeline.</p>
-        <div class="ed-split">
-          <div>
-            <p class="ed-pane-h">Drag to move · pull the bottom edge to resize</p>
-            <div class="ed-tl-scroll" id="edTlScroll"><div class="tl ed-tl" id="edTimeline"></div></div>
-          </div>
-          <div>
-            <p class="ed-pane-h">Exact times<span class="sp"></span><button class="btn" id="addRow">+ Add a block</button></p>
-            <table class="etable">
-              <thead><tr><th style="width:112px">Start</th><th style="width:112px">End</th><th>Activity</th><th style="width:150px">Kind</th><th style="width:40px" title="A locked activity keeps its time when everything else slides">🔒</th><th style="width:36px"></th></tr></thead>
-              <tbody id="editRows"></tbody>
-            </table>
-          </div>
+        <div class="wgbar">
+          <button class="btn" id="wgPrev" title="The week before">‹</button>
+          <strong id="wgRange">Week</strong>
+          <button class="btn" id="wgNext" title="The week after">›</button>
+          <span class="sp"></span>
+          <button class="btn" id="wgAdd">＋ Add an activity</button>
+          <span class="zoom"><button class="btn" id="wgOut" title="Shorter">−</button><button class="btn" id="wgIn" title="Taller">＋</button></span>
+        </div>
+        <p class="hint">These are the real days of this week. <strong>Drag an activity up or down</strong> to change its time, or <strong>sideways</strong> to move it to another day. <strong>Pull the bottom edge</strong> to make it longer. <strong>Tap an empty stretch</strong> to add something there. Nothing pushes anything else around — two things can share a slot if that is what really happens. Changes here apply to <strong>these dates only</strong>, unless you press <em>Save as the normal week</em>.</p>
+        <div class="wgwrap">
+          <div class="wghead" id="wgHead"></div>
+          <div class="wgscroll" id="wgScroll"><div class="wggrid" id="wgGrid"></div></div>
+        </div>
+        <div class="wgsel" id="wgSel" hidden>
+          <label class="field"><span>Activity</span><input type="text" id="wsName" placeholder="Activity name"></label>
+          <label class="field"><span>Kind</span><select id="wsType"></select></label>
+          <label class="field sm"><span>Day</span><select id="wsDay"></select></label>
+          <label class="field sm"><span>Start</span><input type="time" id="wsStart"></label>
+          <label class="field sm"><span>End</span><input type="time" id="wsEnd"></label>
+          <label class="wgchk" title="A locked activity keeps its time when everything else slides"><input type="checkbox" id="wsLock"> 🔒 Locked</label>
+          <button class="btn btn-danger" id="wsDel">✕ Remove</button>
         </div>
       </div>
       <div id="editJson" hidden>
-        <p class="hint">Copy this out to back it up, or paste a saved copy in and press <strong>Load pasted schedule</strong>.</p>
+        <p class="hint">This is the <strong>normal week</strong> — the plan every week starts from. Copy it out to back it up, or paste a saved copy in and press <strong>Load pasted schedule</strong>.</p>
         <textarea id="jsonArea" spellcheck="false"></textarea>
         <button class="btn btn-primary" id="loadJson" style="margin-top:10px">Load pasted schedule</button>
       </div>
@@ -747,7 +764,8 @@ try{ if(!/[?&](c|sync)=/.test(location.search)) document.documentElement.classLi
       <button class="btn" id="jsonBtn">{ } Backup / restore</button>
       <span class="spacer"></span>
       <button class="btn" id="cancelEdit">Cancel</button>
-      <button class="btn btn-primary" id="saveEdit">Save schedule</button>
+      <button class="btn" id="promoteWeek" title="Copy this week onto every week from now on">📌 Save as the normal week</button>
+      <button class="btn btn-primary" id="saveEdit">Save these days</button>
     </div>
   </div>
 </div>
@@ -1927,244 +1945,351 @@ function applyTheme(t){
 /* =======================================================================
    WEEKLY SCHEDULE EDITOR
    ======================================================================= */
-let draft = null, editDay = 'mon';
-let edPpm = 4, edBounds = {a:480,b:900}, edSel = -1, edDrag = null;
-const em = {modal:$('editModal'), rows:$('editRows'), tabs:$('dayTabs'), titleInput:$('titleInput'),
-  warn:$('warnBox'), main:$('editMain'), json:$('editJson'), jsonArea:$('jsonArea')};
+let draft = null;                       // clone of the repeating schedule (title + normal week)
+let wgDays = [];                        // [{d:Date, ds:'2026-08-17', key:'mon', list:[...]}] x5
+let wgAnchor = null;                    // Monday of the week on screen
+let wgPpm = 1.1, wgBounds = {a:480,b:900};
+let wgSel = null;                       // {c:columnIndex, i:indexInList}
+let wgDrag = null;
+const WG_MIN_PPM = 0.55, WG_MAX_PPM = 4;
+
+const em = {modal:$('editModal'), titleInput:$('titleInput'),
+  main:$('editMain'), json:$('editJson'), jsonArea:$('jsonArea'),
+  head:$('wgHead'), grid:$('wgGrid'), scroll:$('wgScroll'), selBar:$('wgSel'), range:$('wgRange')};
 
 function openEditor(){
   draft = clone(schedule);
-  editDay = DAY_KEYS.includes(viewDay) ? viewDay : 'mon';
   DAY_KEYS.forEach(k => draft.days[k] = sortDay(draft.days[k]||[]));
-  edSel = -1;
   em.titleInput.value = draft.title;
   em.main.hidden=false; em.json.hidden=true;
-  em.modal.classList.add('open');   // open before drawing so the timeline pane has a height to fit into
-  drawTabs(); drawRows();
-  requestAnimationFrame(()=>{ if(draft) edDraw(); });
+  em.modal.classList.add('open');   // open before drawing so the grid has a height to fit into
+  wgLoad(weekOf(viewDate)[0]);
+  wgFit(); wgDraw();                                    // paint now so nothing flashes empty
+  requestAnimationFrame(()=>{ if(draft){ wgFit(); wgDraw(); } });   // re-fit once the flex box has settled
 }
-const closeEditor = () => { em.modal.classList.remove('open'); draft=null; };
+const closeEditor = () => { em.modal.classList.remove('open'); draft=null; wgDays=[]; wgSel=null; };
 
-function drawTabs(){
-  em.tabs.innerHTML = DAY_KEYS.map(k =>
-    '<button class="tab'+(k===editDay?' on':'')+'" data-d="'+k+'">'+DAY_NAMES[k]+
-    ' <span style="opacity:.6">'+(draft.days[k]||[]).length+'</span></button>').join('');
-  em.tabs.querySelectorAll('.tab').forEach(t => t.onclick = () => { commitRows(); editDay=t.dataset.d; edSel=-1; drawTabs(); drawRows(); });
-}
+/* =======================================================================
+   THE WEEK GRID — five real dates side by side.
 
-function drawRows(){
-  const list = draft.days[editDay] || [];
-  const opts = Object.keys(TYPES).map(k=>'<option value="'+k+'">'+TYPES[k].icon+' '+TYPES[k].label+'</option>').join('');
-  em.rows.innerHTML = list.map((b,i)=>
-    '<tr data-i="'+i+'"'+(i===edSel?' class="sel"':'')+'>' +
-      '<td><input type="time" class="f-start" value="'+esc(b.start)+'"></td>' +
-      '<td><input type="time" class="f-end" value="'+esc(b.end)+'"></td>' +
-      '<td><input type="text" class="f-name" value="'+esc(b.name)+'" placeholder="Activity name"></td>' +
-      '<td><select class="f-type">'+opts+'</select></td>' +
-      '<td style="text-align:center"><input type="checkbox" class="f-lock"'+(b.locked?' checked':'')+
-        ' title="Locked — keeps its time when everything else slides"></td>' +
-      '<td><button class="icon-btn f-del" title="Remove">✕</button></td>' +
-    '</tr>').join('');
-  em.rows.querySelectorAll('tr').forEach((tr,i)=>{
-    tr.querySelector('.f-type').value = TYPES[list[i].type] ? list[i].type : 'other';
-    tr.querySelector('.f-del').onclick = () => { commitRows(); draft.days[editDay].splice(i,1); edSel=-1; drawTabs(); drawRows(); };
-    tr.addEventListener('pointerdown', () => edSelect(i, false));
-    // a time change can reorder the day, so re-sort and redraw both panes
-    tr.querySelectorAll('.f-start,.f-end').forEach(inp => inp.onchange = () => {
-      commitRows(); draft.days[editDay] = sortDay(draft.days[editDay]); drawRows();
-    });
-    tr.querySelectorAll('.f-name,.f-type,.f-lock').forEach(inp => inp.onchange = () => { commitRows(); edDraw(); checkOverlaps(); });
-  });
-  edDraw();
-  checkOverlaps();
+   Everything here edits per-date overrides, exactly what tapping a block
+   on the main timeline writes. Nothing pushes anything else around, so
+   two activities may share a slot; they simply render side by side.
+   ======================================================================= */
+
+/* pull the five days of a week into an editable draft */
+function wgLoad(monday){
+  wgAnchor = startOfDay(monday);
+  wgDays = weekOf(wgAnchor).map(d => ({
+    d: d,
+    ds: localDateStr(d),
+    key: dayKeyOf(d) || 'mon',
+    over: !!dayOverrides[localDateStr(d)],
+    list: clone(blocksOn(d))
+  }));
+  wgSel = null;
 }
 
-function commitRows(){
-  const list = [];
-  em.rows.querySelectorAll('tr').forEach(tr=>{
-    const start=tr.querySelector('.f-start').value, end=tr.querySelector('.f-end').value;
-    const name=tr.querySelector('.f-name').value.trim(), type=tr.querySelector('.f-type').value;
-    const locked=tr.querySelector('.f-lock').checked;
-    if(start && end){
-      const b={start,end,name:name||'Activity',type};
-      if(locked) b.locked=true;
-      list.push(b);
-    }
-  });
-  draft.days[editDay] = list;
-  draft.title = em.titleInput.value.trim() || DEFAULT_SCHEDULE.title;
+const wgList = c => (wgDays[c] ? wgDays[c].list : []);
+const wgSelBlock = () => (wgSel && wgDays[wgSel.c] ? wgDays[wgSel.c].list[wgSel.i] : null);
+
+/* one shared vertical scale so the five days line up */
+function wgSpan(){
+  const all = [];
+  wgDays.forEach(x => x.list.forEach(b => all.push(b)));
+  if(!all.length) return {a:480, b:900};
+  let a = 1440, b = 0;
+  all.forEach(x => { a = Math.min(a, toMin(x.start)); b = Math.max(b, toMin(x.end)); });
+  a = Math.floor((a - 15) / 30) * 30;
+  b = Math.ceil((b + 15) / 30) * 30;
+  return {a: Math.max(0, a), b: Math.min(1440, Math.max(a + 60, b))};
 }
 
-/* -----------------------------------------------------------------------
-   The editor's own proportional timeline. Same look and feel as the live
-   one, but it edits draft.days[editDay] and it lets you drag past a
-   neighbour to reorder, which the live timeline deliberately forbids.
-   ----------------------------------------------------------------------- */
-const edList = () => (draft.days[editDay] || (draft.days[editDay] = []));
-
-function edFit(bounds){
-  const box = $('edTlScroll'); if(!box) return;
-  const cs = getComputedStyle(box);
-  const avail = box.clientHeight - (parseFloat(cs.paddingTop)||0) - (parseFloat(cs.paddingBottom)||0);
-  edPpm = clampN((avail > 60 ? avail : 380) / Math.max(1, bounds.b - bounds.a), 2, 10);
+function wgFit(){
+  wgBounds = wgSpan();
+  const box = em.scroll;
+  const avail = box && box.clientHeight > 80 ? box.clientHeight - 10 : 430;
+  wgPpm = clampN(avail / Math.max(1, wgBounds.b - wgBounds.a), WG_MIN_PPM, WG_MAX_PPM);
+}
+function wgZoom(mult){
+  wgPpm = clampN(wgPpm * mult, WG_MIN_PPM, WG_MAX_PPM);
+  wgDraw();
 }
 
-function edDraw(){
-  const box = $('edTimeline'); if(!box || !draft) return;
-  const list = edList(), B = dayBounds(list);
-  edBounds = B; edFit(B);
-  const y = m => ((m - B.a) * edPpm).toFixed(1);
-  const showHalf = edPpm >= 3.4;
-  let h = '<div class="tl-rail"></div>';
+function wgRangeLabel(){
+  if(!wgDays.length) return 'Week';
+  const a = wgDays[0].d, b = wgDays[4].d;
+  const M = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const same = a.getMonth() === b.getMonth();
+  return 'Week of ' + M[a.getMonth()] + ' ' + a.getDate() +
+         (same ? '\u2013' + b.getDate() : ' \u2013 ' + M[b.getMonth()] + ' ' + b.getDate());
+}
 
+function wgDrawHead(){
+  const today = todayStr();
+  em.head.innerHTML = '<div class="wgdh"></div>' + wgDays.map(x =>
+    '<div class="wgdh' + (x.ds === today ? ' wgtoday' : '') + (x.over ? ' wgover' : '') + '">' +
+      '<b>' + DAY_NAMES[x.key] + '</b>' +
+      '<span>' + (x.d.getMonth()+1) + '/' + x.d.getDate() + '</span>' +
+    '</div>').join('');
+  if(em.range) em.range.textContent = wgRangeLabel();
+}
+
+function wgDraw(){
+  if(!draft || !em.grid) return;
+  wgBounds = wgSpan();
+  const B = wgBounds, hpx = Math.max(120, (B.b - B.a) * wgPpm);
+  const y = m => ((m - B.a) * wgPpm).toFixed(1);
+  const halves = wgPpm >= 1.6;
+
+  wgDrawHead();
+
+  let rail = '<div class="wggutter" style="height:' + hpx.toFixed(1) + 'px">';
   for(let m = Math.ceil(B.a/30)*30; m <= B.b; m += 30){
     const onHour = m % 60 === 0;
-    if(!onHour && !showHalf) continue;
-    h += '<div class="tl-hr'+(onHour?'':' half')+'" style="top:'+y(m)+'px"><b>'+shortTime(m)+'</b></div>';
+    if(!onHour && !halves) continue;
+    rail += '<div class="wgt" style="top:' + y(m) + 'px">' + shortTime(m) + '</div>';
   }
-  for(let i=1;i<list.length;i++){
-    const gs = toMin(list[i-1].end), d = toMin(list[i].start) - gs;
-    if(d < 4) continue;
-    h += '<div class="gap" style="top:'+y(gs)+'px;height:'+(d*edPpm).toFixed(1)+'px">'+
-         (d*edPpm > 26 ? '<span>'+durLabel(d)+' open</span>' : '')+'</div>';
-  }
-  list.forEach((b,i)=>{
-    const T = typeOf(b.type), s = toMin(b.start), e = toMin(b.end);
-    const hpx = Math.max(9,(e-s)*edPpm);
-    const size = hpx < 32 ? ' xs' : (hpx < 58 ? ' sm' : '');
-    h += '<div class="blk live s-up'+size+(b.locked?' locked':'')+(i===edSel?' sel':'')+'"'+
-      ' style="--c:'+T.color+';top:'+y(s)+'px;height:'+hpx.toFixed(1)+'px" data-i="'+i+'"'+
-      ' tabindex="0" role="button" aria-label="'+esc(b.name)+', '+shortTime(s)+' to '+shortTime(e)+
-      '. Arrow keys move it, shift plus arrows resize it.">'+
-      '<div class="blk-in"><span class="em">'+T.icon+'</span><span class="nm">'+esc(b.name)+'</span>'+
-        (b.locked?'<span class="lock">\u{1F512}</span>':'')+
-        '<span class="meta"><span class="tm">'+shortTime(s)+'\u2013'+shortTime(e)+'</span>'+
-        '<span class="len">'+durLabel(Math.max(0,e-s))+'</span></span></div>'+
-      '<div class="grip" aria-hidden="true"><span></span></div></div>';
-  });
+  rail += '</div>';
 
-  box.style.height = ((B.b - B.a) * edPpm).toFixed(1)+'px';
-  box.innerHTML = h;
-  box.querySelectorAll('.blk').forEach(n=>{
-    n.addEventListener('pointerdown', edDown);
-    n.addEventListener('keydown', edKey);
-  });
-}
-
-function edSelect(i, focusRow){
-  edSel = i;
-  const rows = em.rows.querySelectorAll('tr');
-  rows.forEach((tr,k)=>tr.classList.toggle('sel', k===i));
-  const tl = $('edTimeline');
-  if(tl) tl.querySelectorAll('.blk').forEach((n,k)=>n.classList.toggle('sel', k===i));
-  const tr = rows[i];
-  if(tr && focusRow){
-    tr.scrollIntoView({block:'nearest'});
-    const f = tr.querySelector('.f-name'); if(f) f.focus();
-  }
-}
-
-/* the block you dragged wins its new spot; the rest slide out of the way,
-   keeping their order and their length. Dropping past a neighbour reorders. */
-function edPushApart(list, anchor){
-  const s = sortDay(list), ai = s.indexOf(anchor);
-  if(ai < 0) return;
-  for(let i=ai+1;i<s.length;i++){
-    const lo = toMin(s[i-1].end);
-    if(toMin(s[i].start) < lo){
-      const dur = toMin(s[i].end) - toMin(s[i].start);
-      const a = clampN(lo, 0, 1435);
-      s[i].start = toHM(a); s[i].end = toHM(clampN(a + dur, 0, 1439));
+  const cols = wgDays.map((x, c) => {
+    const list = sortDay(x.list);
+    x.list = list;
+    const lay = layoutColumns(list);
+    let s = '<div class="wgcol" data-c="' + c + '" style="height:' + hpx.toFixed(1) + 'px">';
+    for(let m = Math.ceil(B.a/30)*30; m <= B.b; m += 30){
+      const onHour = m % 60 === 0;
+      if(!onHour && !halves) continue;
+      s += '<div class="wgline' + (onHour ? '' : ' half') + '" style="top:' + y(m) + 'px"></div>';
     }
-  }
-  for(let i=ai-1;i>=0;i--){
-    const hi = toMin(s[i+1].start);
-    if(toMin(s[i].end) > hi){
-      const dur = toMin(s[i].end) - toMin(s[i].start);
-      const b = clampN(hi, 5, 1439);
-      s[i].end = toHM(b); s[i].start = toHM(clampN(b - dur, 0, 1435));
-    }
-  }
+    list.forEach((b, i) => {
+      const T = typeOf(b.type), bs = toMin(b.start), be = toMin(b.end);
+      const bh = Math.max(11, (be - bs) * wgPpm);
+      const w = 1 / Math.max(1, lay[i].cols), off = lay[i].col / Math.max(1, lay[i].cols);
+      const on = wgSel && wgSel.c === c && wgSel.i === i;
+      s += '<div class="wgb' + (bh < 30 ? ' tiny' : '') + (on ? ' sel' : '') + '"' +
+        ' style="--c:' + T.color + ';top:' + y(bs) + 'px;height:' + bh.toFixed(1) + 'px;' +
+        'left:calc(' + (off*100).toFixed(3) + '% + 2px);width:calc(' + (w*100).toFixed(3) + '% - 5px)"' +
+        ' data-c="' + c + '" data-i="' + i + '" tabindex="0" role="button"' +
+        ' aria-label="' + esc(b.name) + ', ' + DAY_NAMES[x.key] + ', ' + shortTime(bs) + ' to ' + shortTime(be) +
+        (b.locked ? '. Locked.' : '') + ', arrows to move.">' +
+        '<span class="wgn">' + T.icon + ' ' + esc(b.name) + (b.locked ? ' <span class="wglk">🔒</span>' : '') + '</span>' +
+        '<span class="wgm">' + shortTime(bs) + '\u2013' + shortTime(be) + '</span>' +
+        '<span class="wgrip" aria-hidden="true"></span></div>';
+    });
+    return s + '</div>';
+  }).join('');
+
+  em.grid.innerHTML = rail + cols;
+  em.grid.querySelectorAll('.wgb').forEach(n => {
+    n.addEventListener('pointerdown', wgDown);
+    n.addEventListener('keydown', wgKey);
+  });
+  wgDrawSel();
 }
 
-function edApply(b){
-  const list = edList();
-  edPushApart(list, b);
-  draft.days[editDay] = sortDay(list);
-  edSel = draft.days[editDay].indexOf(b);
-  drawRows();
+/* ---- the selected-activity bar under the grid ---- */
+function wgDrawSel(){
+  const b = wgSelBlock();
+  if(!b){ em.selBar.hidden = true; return; }
+  em.selBar.hidden = false;
+  const ty = $('wsType');
+  if(!ty.options.length){
+    ty.innerHTML = Object.keys(TYPES).map(k =>
+      '<option value="' + k + '">' + TYPES[k].icon + ' ' + TYPES[k].label + '</option>').join('');
+  }
+  const dy = $('wsDay');
+  dy.innerHTML = wgDays.map((x, c) =>
+    '<option value="' + c + '">' + DAY_NAMES[x.key] + ' ' + (x.d.getMonth()+1) + '/' + x.d.getDate() + '</option>').join('');
+  $('wsName').value  = b.name || '';
+  ty.value            = TYPES[b.type] ? b.type : 'other';
+  dy.value            = String(wgSel.c);
+  $('wsStart').value  = b.start;
+  $('wsEnd').value    = b.end;
+  $('wsLock').checked = !!b.locked;
 }
 
-function edDown(e){
-  if(edDrag || (e.button !== undefined && e.button !== 0)) return;
-  const node = e.currentTarget, b = edList()[+node.dataset.i];
+function wgPick(c, i, focusField){
+  wgSel = (c == null) ? null : {c: c, i: i};
+  em.grid.querySelectorAll('.wgb').forEach(n =>
+    n.classList.toggle('sel', wgSel && +n.dataset.c === wgSel.c && +n.dataset.i === wgSel.i));
+  wgDrawSel();
+  if(focusField && wgSel){ const f = $('wsName'); if(f){ f.focus(); f.select(); } }
+}
+
+/* keep the same activity selected after a re-sort */
+function wgReselect(c, block){
+  const k = wgDays[c] ? wgDays[c].list.indexOf(block) : -1;
+  wgSel = k < 0 ? null : {c: c, i: k};
+}
+
+function wgApply(c, block, focusField){
+  wgDays[c].list = sortDay(wgDays[c].list);
+  wgReselect(c, block);
+  wgDraw();
+  if(focusField){ const f = $('wsName'); if(f) f.focus(); }
+}
+
+/* ---- add ---- */
+function wgAdd(c, atStart){
+  const B = wgBounds;
+  let s = atStart == null ? Math.max(B.a, 540) : atStart;
+  s = clampN(Math.round(s / SNAP) * SNAP, 0, 1435 - 5);
+  const b = {start: toHM(s), end: toHM(Math.min(1439, s + 30)), name: 'New activity', type: 'other'};
+  wgDays[c].list.push(b);
+  wgApply(c, b, true);
+}
+
+/* ---- drag: up/down changes the time, sideways changes the day ---- */
+function wgDown(e){
+  if(wgDrag || (e.button !== undefined && e.button !== 0)) return;
+  const node = e.currentTarget, c = +node.dataset.c, i = +node.dataset.i;
+  const b = wgList(c)[i];
   if(!b) return;
-  edDrag = {node, i:+node.dataset.i, pid:e.pointerId, y0:e.clientY,
-            s0:toMin(b.start), e0:toMin(b.end), moved:false,
-            mode: e.target.closest('.grip') ? 'resize' : 'move'};
+  wgDrag = {node: node, c: c, i: i, block: b, pid: e.pointerId,
+            x0: e.clientX, y0: e.clientY, s0: toMin(b.start), e0: toMin(b.end),
+            col: c, moved: false,
+            mode: e.target.closest('.wgrip') ? 'resize' : 'move'};
   try{ node.setPointerCapture(e.pointerId); }catch(err){}
-  node.addEventListener('pointermove', edMove);
-  node.addEventListener('pointerup', edUp);
-  node.addEventListener('pointercancel', edUp);
+  node.addEventListener('pointermove', wgMove);
+  node.addEventListener('pointerup', wgUp);
+  node.addEventListener('pointercancel', wgUp);
 }
 
-function edMove(e){
-  const d = edDrag; if(!d) return;
-  const dy = e.clientY - d.y0;
-  if(!d.moved){ if(Math.abs(dy) < 5) return; d.moved = true; d.node.classList.add('dragging'); }
-  const B = edBounds, dur = d.e0 - d.s0;
-  const delta = Math.round((dy / edPpm) / SNAP) * SNAP;
+/* which column is the pointer over right now */
+function wgColAt(clientX){
+  const cols = em.grid.querySelectorAll('.wgcol');
+  for(let k = 0; k < cols.length; k++){
+    const r = cols[k].getBoundingClientRect();
+    if(clientX >= r.left && clientX <= r.right) return k;
+  }
+  return null;
+}
+
+function wgMove(e){
+  const d = wgDrag; if(!d) return;
+  const dy = e.clientY - d.y0, dx = e.clientX - d.x0;
+  if(!d.moved){
+    if(Math.abs(dy) < 5 && Math.abs(dx) < 5) return;
+    d.moved = true; d.node.classList.add('dragging');
+  }
+  const B = wgBounds, dur = d.e0 - d.s0;
+  const delta = Math.round((dy / wgPpm) / SNAP) * SNAP;
   let s, en;
-  if(d.mode === 'resize'){ s = d.s0; en = clampN(d.e0 + delta, d.s0 + MIN_DUR, Math.max(d.s0 + MIN_DUR, B.b)); }
-  else { s = clampN(d.s0 + delta, B.a, Math.max(B.a, B.b - dur)); en = s + dur; }
-  d.cur = {s:s, e:en};
-  d.node.style.top = ((s - B.a) * edPpm).toFixed(1)+'px';
-  d.node.style.height = Math.max(9,(en-s)*edPpm).toFixed(1)+'px';
-  const tm = d.node.querySelector('.tm'), ln = d.node.querySelector('.len');
-  if(tm) tm.textContent = shortTime(s)+'\u2013'+shortTime(en);
-  if(ln) ln.textContent = durLabel(en-s);
+  if(d.mode === 'resize'){
+    s = d.s0;
+    en = clampN(d.e0 + delta, d.s0 + MIN_DUR, 1439);
+  } else {
+    s = clampN(d.s0 + delta, 0, 1435);
+    en = Math.min(1439, s + dur);
+    const c = wgColAt(e.clientX);
+    if(c != null && c !== d.col){
+      d.col = c;
+      const host = em.grid.querySelectorAll('.wgcol')[c];
+      if(host){ host.appendChild(d.node); d.node.style.left = '2px'; d.node.style.width = 'calc(100% - 5px)'; }
+    }
+  }
+  d.cur = {s: s, e: en};
+  d.node.style.top = ((s - B.a) * wgPpm).toFixed(1) + 'px';
+  d.node.style.height = Math.max(11, (en - s) * wgPpm).toFixed(1) + 'px';
+  const m = d.node.querySelector('.wgm');
+  if(m) m.textContent = shortTime(s) + '\u2013' + shortTime(en);
 }
 
-function edUp(){
-  const d = edDrag; if(!d) return;
-  edDrag = null;
+function wgUp(){
+  const d = wgDrag; if(!d) return;
+  wgDrag = null;
   try{ d.node.releasePointerCapture(d.pid); }catch(err){}
-  d.node.removeEventListener('pointermove', edMove);
-  d.node.removeEventListener('pointerup', edUp);
-  d.node.removeEventListener('pointercancel', edUp);
+  d.node.removeEventListener('pointermove', wgMove);
+  d.node.removeEventListener('pointerup', wgUp);
+  d.node.removeEventListener('pointercancel', wgUp);
   d.node.classList.remove('dragging');
-  const b = edList()[d.i];
-  if(!b){ drawRows(); return; }
-  if(!d.moved){ edSelect(d.i, true); return; }        // a tap just picks the block
-  if(d.cur && (d.cur.s !== d.s0 || d.cur.e !== d.e0)){
-    b.start = toHM(d.cur.s); b.end = toHM(d.cur.e);
-    edApply(b);
-  } else { drawRows(); }
+  if(!d.moved){ wgPick(d.c, d.i, false); return; }        // a tap just picks it
+  const b = d.block;
+  if(d.cur){ b.start = toHM(d.cur.s); b.end = toHM(d.cur.e); }
+  if(d.col !== d.c){                                      // moved to another day
+    const from = wgDays[d.c].list, k = from.indexOf(b);
+    if(k >= 0) from.splice(k, 1);
+    wgDays[d.col].list.push(b);
+  }
+  wgApply(d.col, b, false);
 }
 
-function edKey(e){
-  const i = +e.currentTarget.dataset.i, b = edList()[i];
-  if(!b) return;
-  if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); edSelect(i, true); return; }
-  const dir = e.key === 'ArrowUp' ? -SNAP : (e.key === 'ArrowDown' ? SNAP : 0);
-  if(!dir) return;
+function wgKey(e){
+  const c = +e.currentTarget.dataset.c, i = +e.currentTarget.dataset.i;
+  const b = wgList(c)[i]; if(!b) return;
+  if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); wgPick(c, i, true); return; }
+  const vert = e.key === 'ArrowUp' ? -SNAP : (e.key === 'ArrowDown' ? SNAP : 0);
+  const side = e.key === 'ArrowLeft' ? -1 : (e.key === 'ArrowRight' ? 1 : 0);
+  if(!vert && !side) return;
   e.preventDefault();
   const s0 = toMin(b.start), e0 = toMin(b.end);
-  if(e.shiftKey) b.end = toHM(Math.max(s0 + MIN_DUR, e0 + dir));
-  else { b.start = toHM(Math.max(0, s0 + dir)); b.end = toHM(Math.max(MIN_DUR, e0 + dir)); }
-  edApply(b);
-  const n = $('edTimeline').querySelector('.blk[data-i="'+edSel+'"]');
+  let c2 = c;
+  if(vert){
+    if(e.shiftKey) b.end = toHM(clampN(Math.max(s0 + MIN_DUR, e0 + vert), 5, 1439));
+    else { b.start = toHM(clampN(s0 + vert, 0, 1435)); b.end = toHM(clampN(e0 + vert, 5, 1439)); }
+  } else {
+    c2 = clampN(c + side, 0, wgDays.length - 1);
+    if(c2 !== c){ wgDays[c].list.splice(i, 1); wgDays[c2].list.push(b); }
+  }
+  wgApply(c2, b, false);
+  const n = em.grid.querySelector('.wgb[data-c="' + (wgSel ? wgSel.c : c2) + '"][data-i="' + (wgSel ? wgSel.i : 0) + '"]');
   if(n) n.focus();
 }
 
-function checkOverlaps(){
-  const list = sortDay(draft.days[editDay]||[]);
-  const problems = [];
-  for(let i=0;i<list.length;i++){
-    if(toMin(list[i].end) <= toMin(list[i].start)) problems.push('“'+list[i].name+'” ends before it starts.');
-    if(i>0 && toMin(list[i].start) < toMin(list[i-1].end)) problems.push('“'+list[i-1].name+'” overlaps “'+list[i].name+'”.');
+/* ---- tap an empty stretch to drop an activity there ---- */
+function wgGridClick(e){
+  if(e.target.closest('.wgb')) return;
+  const col = e.target.closest('.wgcol');
+  if(!col) return;
+  const r = col.getBoundingClientRect();
+  wgAdd(+col.dataset.c, wgBounds.a + (e.clientY - r.top) / wgPpm);
+}
+
+/* ---- selected-activity bar wiring ---- */
+function wgSelEdit(){
+  const b = wgSelBlock(); if(!b) return;
+  b.name = $('wsName').value.trim() || 'Activity';
+  b.type = $('wsType').value;
+  if($('wsLock').checked) b.locked = true; else delete b.locked;
+  const s = $('wsStart').value, en = $('wsEnd').value;
+  if(s) b.start = s;
+  if(en) b.end = en;
+  if(toMin(b.end) <= toMin(b.start)) b.end = toHM(Math.min(1439, toMin(b.start) + MIN_DUR));
+  const want = +$('wsDay').value, from = wgSel.c;
+  if(want !== from && wgDays[want]){
+    wgDays[from].list.splice(wgSel.i, 1);
+    wgDays[want].list.push(b);
+    wgApply(want, b, false);
+  } else {
+    wgApply(from, b, false);
   }
-  em.warn.innerHTML = problems.length ? '⚠️ ' + problems.slice(0,4).map(esc).join('<br>⚠️ ') : '';
+}
+
+function wgDelete(){
+  const b = wgSelBlock(); if(!b) return;
+  wgDays[wgSel.c].list.splice(wgSel.i, 1);
+  wgSel = null;
+  wgDraw();
+}
+
+/* ---- write the five days back out ---- */
+function wgSaveDays(){
+  wgDays.forEach(x => { dayOverrides[x.ds] = sortDay(clone(x.list)); });
+  saveOverrides();
+}
+/* promote this week into the repeating schedule and drop the five overrides */
+function wgPromote(){
+  wgDays.forEach(x => {
+    draft.days[x.key] = sortDay(clone(x.list));
+    delete dayOverrides[x.ds];
+  });
+  saveOverrides();
+}
+
+function wgStep(dir){
+  wgLoad(addDays(wgAnchor, dir * 7));
+  wgDraw();
 }
 
 /* =======================================================================
@@ -2263,22 +2388,34 @@ el.fsBtn.onclick = () => {
 el.editBtn.onclick = openEditor;
 $('closeEdit').onclick = closeEditor;
 $('cancelEdit').onclick = closeEditor;
-$('addRow').onclick = () => {
-  commitRows();
-  const list = draft.days[editDay], last = sortDay(list)[list.length-1];
-  const start = last ? last.end : '08:35';
-  const nb = {start, end:toHM(toMin(start)+15), name:'New activity', type:'other'};
-  list.push(nb);
-  draft.days[editDay] = sortDay(list);
-  edSel = draft.days[editDay].indexOf(nb);
-  drawTabs(); drawRows();
-  edSelect(edSel, true);
-};
+$('wgAdd').onclick  = () => wgAdd(wgSel ? wgSel.c : 0, null);
+$('wgPrev').onclick = () => wgStep(-1);
+$('wgNext').onclick = () => wgStep(1);
+$('wgIn').onclick   = () => wgZoom(1.25);
+$('wgOut').onclick  = () => wgZoom(0.8);
+em.scroll.addEventListener('click', wgGridClick);
+['wsName','wsType','wsStart','wsEnd','wsLock','wsDay'].forEach(id => {
+  const n = $(id); if(n) n.onchange = wgSelEdit;
+});
+$('wsDel').onclick = wgDelete;
+
+/* keep the five days lined up with the day being viewed */
+window.addEventListener('resize', () => { if(draft && !em.main.hidden){ wgFit(); wgDraw(); } });
+
 $('saveEdit').onclick = () => {
-  commitRows();
+  draft.title = em.titleInput.value.trim() || DEFAULT_SCHEDULE.title;
+  wgSaveDays();
   DAY_KEYS.forEach(k => draft.days[k] = sortDay(draft.days[k]||[]));
   schedule = draft; saveSchedule(schedule);
-  closeEditor(); lastScrolledIdx=-1; firstPaint=true; repaint();
+  closeEditor(); tlSig=null; lastScrolledIdx=-1; firstPaint=true; repaint();
+};
+$('promoteWeek').onclick = () => {
+  if(!confirm('Make this week the normal week from now on?\n\nEvery week will start from these five days.')) return;
+  draft.title = em.titleInput.value.trim() || DEFAULT_SCHEDULE.title;
+  wgPromote();
+  DAY_KEYS.forEach(k => draft.days[k] = sortDay(draft.days[k]||[]));
+  schedule = draft; saveSchedule(schedule);
+  closeEditor(); tlSig=null; lastScrolledIdx=-1; firstPaint=true; repaint();
 };
 $('resetBtn').onclick = () => {
   if(!confirm('Throw away your changes and go back to the original schedule?')) return;
@@ -2288,8 +2425,12 @@ $('resetBtn').onclick = () => {
   closeEditor(); tlSig=null; lastScrolledIdx=-1; firstPaint=true; buildDayNav(); repaint();
 };
 $('jsonBtn').onclick = () => {
-  if(!em.json.hidden){ em.json.hidden=true; em.main.hidden=false; drawTabs(); drawRows(); }
-  else { commitRows(); em.jsonArea.value = JSON.stringify(draft,null,2); em.json.hidden=false; em.main.hidden=true; }
+  if(!em.json.hidden){ em.json.hidden=true; em.main.hidden=false; wgFit(); wgDraw(); }
+  else {
+    draft.title = em.titleInput.value.trim() || DEFAULT_SCHEDULE.title;
+    em.jsonArea.value = JSON.stringify(draft,null,2);
+    em.json.hidden=false; em.main.hidden=true;
+  }
 };
 $('loadJson').onclick = () => {
   try{
@@ -2298,7 +2439,9 @@ $('loadJson').onclick = () => {
     DAY_KEYS.forEach(k => { if(!Array.isArray(parsed.days[k])) parsed.days[k]=[]; });
     draft = parsed;
     em.titleInput.value = draft.title || DEFAULT_SCHEDULE.title;
-    em.json.hidden=true; em.main.hidden=false; drawTabs(); drawRows();
+    em.json.hidden=true; em.main.hidden=false;
+    wgLoad(wgAnchor || weekOf(viewDate)[0]);
+    wgFit(); wgDraw();
   }catch(e){ alert("That doesn't look like a saved schedule."); }
 };
 em.modal.onclick = e => { if(e.target===em.modal) closeEditor(); };
