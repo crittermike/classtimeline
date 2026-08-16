@@ -504,6 +504,32 @@ html.wk-open #wkPrint{
 .wgb.tiny .wgm{display:none}
 .wgb.tiny .wgn{font-size:10.5px}
 .wgb .wglk{font-size:9px;opacity:.8}
+/* the shaded block you paint out by dragging across empty space */
+.wgb.wgghost{border-style:dashed;border-left-style:solid;background:color-mix(in srgb,var(--accent) 10%,var(--panel));
+  border-color:color-mix(in srgb,var(--accent) 55%,transparent);pointer-events:none;z-index:7;opacity:.95}
+.wgb.wgghost .wgn{color:var(--accent)}
+.tlghost{position:absolute;left:var(--gut);right:0;border-radius:14px;pointer-events:none;z-index:7;
+  background:color-mix(in srgb,var(--accent) 11%,var(--panel));
+  border:2px dashed color-mix(in srgb,var(--accent) 55%,transparent);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  font-weight:800;color:var(--accent);font-size:clamp(.7rem,.9vw,.95rem);overflow:hidden;padding:0 10px}
+
+/* ---- type picker: a filter-as-you-type front end for a <select> ---- */
+.tphidden{display:none!important}
+.tpick{position:relative}
+.tpin{cursor:text}
+.tpick.on .tpin{outline:2px solid var(--accent);outline-offset:1px}
+.tpmenu{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 14px 34px rgba(20,35,70,.18);padding:5px;max-height:246px;overflow:auto;
+  overscroll-behavior:contain}
+.tpmenu.up{top:auto;bottom:calc(100% + 4px)}
+.tpo{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:8px;cursor:pointer;
+  font-size:.9rem;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tpo .tpdot{flex:0 0 auto;width:9px;height:9px;border-radius:50%}
+.tpo.hi{background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--accent)}
+.tpo[aria-selected="true"]::after{content:"\2713";margin-left:auto;font-weight:900;color:var(--accent)}
+.tpnone{padding:10px;font-size:.85rem;font-weight:700;color:var(--ink-faint);text-align:center}
 .wgb .wgrip{position:absolute;left:0;right:0;bottom:0;height:8px;cursor:ns-resize}
 .wgb .wgrip::after{content:"";position:absolute;left:50%;bottom:2px;transform:translateX(-50%);
   width:16px;height:2px;border-radius:2px;background:var(--line)}
@@ -738,7 +764,7 @@ try{ if(!/[?&](c|sync)=/.test(location.search)) document.documentElement.classLi
           <button class="btn" id="wgAdd">＋ Add an activity</button>
           <span class="zoom"><button class="btn" id="wgOut" title="Shorter">−</button><button class="btn" id="wgIn" title="Taller">＋</button></span>
         </div>
-        <p class="hint">These are the real days of this week. <strong>Drag an activity up or down</strong> to change its time, or <strong>sideways</strong> to move it to another day. <strong>Pull the bottom edge</strong> to make it longer. <strong>Tap an empty stretch</strong> to add something there. Nothing pushes anything else around — two things can share a slot if that is what really happens. Changes here apply to <strong>these dates only</strong>, unless you press <em>Save as the normal week</em>.</p>
+        <p class="hint">These are the real days of this week. <strong>Drag an activity up or down</strong> to change its time, or <strong>sideways</strong> to move it to another day. <strong>Pull the bottom edge</strong> to make it longer. <strong>Drag down an empty stretch</strong> to block out a new activity, or just tap it for a quick 30 minutes. Nothing pushes anything else around — two things can share a slot if that is what really happens. Changes here apply to <strong>these dates only</strong>, unless you press <em>Save as the normal week</em>.</p>
         <div class="wgwrap">
           <div class="wghead" id="wgHead"></div>
           <div class="wgscroll" id="wgScroll"><div class="wggrid" id="wgGrid"></div></div>
@@ -1460,7 +1486,7 @@ function buildTimeline(list, edit, bounds){
     const between = gs > bounds.a && ge < bounds.b;   /* a real hole, not day padding */
     let inner = '';
     if(d*ppm > 26){
-      inner = '<span class="gap-lbl">'+(edit ? '＋ '+(d*ppm > 46 ? 'add here · ' : '') : '')+durLabel(d)+' open</span>';
+      inner = '<span class="gap-lbl">'+(edit ? '＋ '+(d*ppm > 46 ? 'tap or drag · ' : '') : '')+durLabel(d)+' open</span>';
       if(edit && between && d*ppm > 46)
         inner += '<button type="button" class="gap-close" data-s="'+gs+'" data-e="'+ge+'"'+
                  ' title="Pull the rest of the day up into this gap">⤒ close</button>';
@@ -1514,8 +1540,76 @@ function buildTimeline(list, edit, bounds){
   }
 }
 
+/* ---- drag down the empty part of the day to block out a stretch of time ----
+   Touch keeps its native scroll; a tap there still opens the add box. */
+let tlNew = null, tlClickOff = 0;
+
+function tlMinAt(clientY){
+  const r = el.timeline.getBoundingClientRect();
+  return clampN(Math.round((tlBounds.a + (clientY - r.top) / ppm) / SNAP) * SNAP,
+                tlBounds.a, tlBounds.b);
+}
+
+function tlNewDown(e){
+  if(tlNew || !canEdit() || e.pointerType === 'touch') return;
+  if(e.button !== undefined && e.button !== 0) return;
+  if(e.target.closest('.blk, .dot, .gap-close, .nowline')) return;
+  tlNew = {pid: e.pointerId, y0: e.clientY, at: tlMinAt(e.clientY), moved: false, ghost: null};
+  try{ el.timeline.setPointerCapture(e.pointerId); }catch(err){}
+  el.timeline.addEventListener('pointermove', tlNewMove);
+  el.timeline.addEventListener('pointerup', tlNewUp);
+  el.timeline.addEventListener('pointercancel', tlNewOff);
+}
+
+function tlNewSpan(clientY){
+  const n = tlNew, to = tlMinAt(clientY);
+  let s = Math.min(n.at, to), en = Math.max(n.at, to);
+  if(en - s < MIN_DUR){
+    if(to < n.at) s = Math.max(tlBounds.a, en - MIN_DUR);
+    else en = Math.min(tlBounds.b, s + MIN_DUR);
+  }
+  return {s: s, e: en};
+}
+
+function tlNewMove(e){
+  const n = tlNew; if(!n) return;
+  if(!n.moved){
+    if(Math.abs(e.clientY - n.y0) < 6) return;
+    n.moved = true;
+    n.ghost = document.createElement('div');
+    n.ghost.className = 'tlghost';
+    el.timeline.appendChild(n.ghost);
+  }
+  const sp = tlNewSpan(e.clientY);
+  n.cur = sp;
+  n.ghost.style.top = ((sp.s - tlBounds.a) * ppm).toFixed(1) + 'px';
+  n.ghost.style.height = Math.max(14, (sp.e - sp.s) * ppm).toFixed(1) + 'px';
+  n.ghost.textContent = fmt12s(sp.s) + ' \u2013 ' + fmt12s(sp.e) +
+                        ((sp.e - sp.s) * ppm > 40 ? '  \u00b7  ' + durLabel(sp.e - sp.s) : '');
+}
+
+function tlNewUp(e){
+  const n = tlNew;
+  tlNewOff();
+  if(!n || !n.moved) return;
+  const sp = n.cur || tlNewSpan(e.clientY);
+  tlClickOff = Date.now();
+  openNewBlock(sp.s, sp.e);
+}
+
+function tlNewOff(){
+  const n = tlNew; if(!n) return;
+  tlNew = null;
+  try{ el.timeline.releasePointerCapture(n.pid); }catch(err){}
+  el.timeline.removeEventListener('pointermove', tlNewMove);
+  el.timeline.removeEventListener('pointerup', tlNewUp);
+  el.timeline.removeEventListener('pointercancel', tlNewOff);
+  if(n.ghost && n.ghost.parentNode) n.ghost.parentNode.removeChild(n.ghost);
+}
+
 /* Click any empty stretch to drop a new activity there. */
 function onTimelineClick(e){
+  if(Date.now() - tlClickOff < 400) return;
   if(!canEdit()) return;
   if(e.target.closest('.blk, .dot, .gap-close, .nowline')) return;
   const r = el.timeline.getBoundingClientRect();
@@ -1753,7 +1847,127 @@ function autoScroll(force){
   sc.scrollTo({top: Math.max(0, y - vh*0.42), behavior: didFirstScroll ? 'smooth' : 'auto'});
   didFirstScroll = true;
 }
-function repaint(){ if(atHome()) return; syncTick(); if(dragging) return; render(); autoScroll(); }
+function repaint(){ if(atHome()) return; syncTick();
+  /* a rebuild mid-drag would tear the ghost out of the page */
+  if(dragging || tlNew || wgNew) return;
+  render(); autoScroll(); }
+
+/* =======================================================================
+   TYPE PICKER
+   The kind list is long, so put a search box in front of it. The original
+   <select> stays in the DOM and stays the source of truth — everything
+   that reads or writes .value keeps working untouched.
+   ======================================================================= */
+function typePicker(sel){
+  if(!sel || sel.dataset.tp) return;
+  sel.dataset.tp = '1';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'tpick';
+  sel.parentNode.insertBefore(wrap, sel);
+  wrap.appendChild(sel);
+  sel.classList.add('tphidden');
+
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.className = 'tpin';
+  inp.autocomplete = 'off';
+  inp.spellcheck = false;
+  inp.placeholder = 'Start typing\u2026';
+  inp.setAttribute('role', 'combobox');
+  inp.setAttribute('aria-expanded', 'false');
+
+  const menu = document.createElement('div');
+  menu.className = 'tpmenu';
+  menu.hidden = true;
+
+  wrap.appendChild(inp);
+  wrap.appendChild(menu);
+
+  let open = false, hi = 0, shown = [];
+
+  const opts = () => Array.from(sel.options).map(o => ({v: o.value, t: o.textContent}));
+  const chosen = () => (sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : '');
+  /* the emoji is decoration; searching should ignore it */
+  const words = o => (o.t.replace(/[^\p{L}\p{N} \/]/gu, ' ') + ' ' + o.v).toLowerCase();
+
+  function paint(q){
+    const s = (q || '').trim().toLowerCase();
+    shown = s ? opts().filter(o => words(o).indexOf(s) >= 0) : opts();
+    if(!shown.length){ menu.innerHTML = '<div class="tpnone">Nothing matches that</div>'; return; }
+    if(hi >= shown.length) hi = shown.length - 1;
+    if(hi < 0) hi = 0;
+    menu.innerHTML = shown.map((o, k) =>
+      '<div class="tpo' + (k === hi ? ' hi' : '') + '" role="option" data-v="' + o.v + '"' +
+      ' aria-selected="' + (o.v === sel.value) + '">' +
+      '<span class="tpdot" style="background:' + typeOf(o.v).color + '"></span>' +
+      esc(o.t) + '</div>').join('');
+    const on = menu.querySelector('.tpo.hi');
+    if(on) on.scrollIntoView({block: 'nearest'});
+  }
+
+  function show(){
+    open = true;
+    wrap.classList.add('on');
+    menu.hidden = false;
+    inp.setAttribute('aria-expanded', 'true');
+    hi = Math.max(0, opts().findIndex(o => o.v === sel.value));
+    paint('');
+    inp.select();
+    /* flip the list above the box when there is no room below it */
+    const r = inp.getBoundingClientRect();
+    menu.classList.toggle('up', window.innerHeight - r.bottom < 260 && r.top > 260);
+    const on = menu.querySelector('.tpo.hi');
+    if(on) on.scrollIntoView({block: 'nearest'});
+  }
+
+  function hide(){
+    open = false;
+    wrap.classList.remove('on');
+    menu.hidden = true;
+    inp.setAttribute('aria-expanded', 'false');
+    inp.value = chosen();
+  }
+
+  function commit(v){
+    if(v == null) return hide();
+    sel.value = v;
+    hide();
+    sel.dispatchEvent(new Event('change', {bubbles: true}));
+  }
+
+  inp.addEventListener('focus', show);
+  inp.addEventListener('pointerdown', () => { if(!open) setTimeout(show, 0); });
+  inp.addEventListener('input', () => { hi = 0; if(!open) show(); paint(inp.value); });
+  inp.addEventListener('blur', () => setTimeout(() => { if(open) hide(); }, 120));
+
+  inp.addEventListener('keydown', e => {
+    if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+      e.preventDefault();
+      if(!open) return show();
+      hi += (e.key === 'ArrowDown' ? 1 : -1);
+      if(hi < 0) hi = shown.length - 1;
+      if(hi >= shown.length) hi = 0;
+      paint(inp.value);
+    } else if(e.key === 'Enter'){
+      if(open){ e.preventDefault(); e.stopPropagation(); commit(shown[hi] && shown[hi].v); }
+    } else if(e.key === 'Escape'){
+      if(open){ e.preventDefault(); e.stopPropagation(); hide(); }
+    } else if(e.key === 'Tab'){
+      if(open) hide();
+    }
+  });
+
+  menu.addEventListener('pointerdown', e => {
+    const o = e.target.closest('.tpo');
+    if(!o) return;
+    e.preventDefault();           /* keep focus so blur does not race the click */
+    commit(o.dataset.v);
+  });
+
+  sel.tpSync = () => { if(!open) inp.value = chosen(); };
+  sel.tpSync();
+}
 
 /* =======================================================================
    TODAY-ONLY BLOCK EDITOR
@@ -1764,6 +1978,7 @@ const bm = {modal:$('blockModal'), title:$('blockTitle'), hint:$('blockHint'),
 let editingIdx = -1, editingOrig = null;
 
 bm.type.innerHTML = Object.keys(TYPES).map(k=>'<option value="'+k+'">'+TYPES[k].icon+' '+TYPES[k].label+'</option>').join('');
+typePicker(bm.type);
 
 function openBlock(i){
   const list = viewBlocks();
@@ -1778,6 +1993,7 @@ function openBlock(i){
       + ". Your normal weekly schedule stays as it is.";
   bm.name.value = b.name; bm.start.value = b.start; bm.end.value = b.end;
   bm.type.value = TYPES[b.type] ? b.type : 'other';
+  bm.type.tpSync && bm.type.tpSync();
   bm.lock.checked = !!b.locked;
   bm.shiftRow.hidden = false;
   bm.del.hidden = false;
@@ -1796,6 +2012,7 @@ function openNewBlock(atStart, atEnd){
     : "Surprise assembly, fire drill, guest reader — just for today.";
   bm.name.value = ''; bm.start.value = toHM(start); bm.end.value = toHM(end);
   bm.type.value = 'assembly';
+  bm.type.tpSync && bm.type.tpSync();
   bm.lock.checked = false;
   bm.shiftRow.hidden = true;
   bm.del.hidden = true;
@@ -1877,6 +2094,7 @@ bm.shiftRow.querySelectorAll('[data-sh]').forEach(b => {
 
 /* tapping any empty stretch of the day drops a new activity there */
 el.timeline.addEventListener('click', onTimelineClick);
+el.timeline.addEventListener('pointerdown', tlNewDown);
 el.resetToday.onclick = () => {
   const what = viewingToday() ? "today's" : DAY_NAMES[viewDay]+"'s";
   if(!confirm('Undo '+what+' changes and go back to the normal schedule?')) return;
@@ -2097,12 +2315,14 @@ function wgDrawSel(){
   if(!ty.options.length){
     ty.innerHTML = Object.keys(TYPES).map(k =>
       '<option value="' + k + '">' + TYPES[k].icon + ' ' + TYPES[k].label + '</option>').join('');
+    typePicker(ty);
   }
   const dy = $('wsDay');
   dy.innerHTML = wgDays.map((x, c) =>
     '<option value="' + c + '">' + DAY_NAMES[x.key] + ' ' + (x.d.getMonth()+1) + '/' + x.d.getDate() + '</option>').join('');
   $('wsName').value  = b.name || '';
   ty.value            = TYPES[b.type] ? b.type : 'other';
+  ty.tpSync && ty.tpSync();
   dy.value            = String(wgSel.c);
   $('wsStart').value  = b.start;
   $('wsEnd').value    = b.end;
@@ -2239,11 +2459,87 @@ function wgKey(e){
 
 /* ---- tap an empty stretch to drop an activity there ---- */
 function wgGridClick(e){
+  if(Date.now() - wgClickOff < 400) return;   /* a drag already handled it */
   if(e.target.closest('.wgb')) return;
   const col = e.target.closest('.wgcol');
   if(!col) return;
   const r = col.getBoundingClientRect();
   wgAdd(+col.dataset.c, wgBounds.a + (e.clientY - r.top) / wgPpm);
+}
+
+/* ---- drag across empty space to block out a new activity ----
+   Touch is left alone so the grid still scrolls with a finger; a tap
+   there still drops in a 30 minute activity. */
+let wgNew = null, wgClickOff = 0;
+
+function wgMinAt(col, clientY){
+  const r = col.getBoundingClientRect();
+  return clampN(Math.round((wgBounds.a + (clientY - r.top) / wgPpm) / SNAP) * SNAP, 0, 1439);
+}
+
+function wgNewDown(e){
+  if(wgDrag || wgNew || e.pointerType === 'touch') return;
+  if(e.button !== undefined && e.button !== 0) return;
+  if(e.target.closest('.wgb')) return;
+  const col = e.target.closest('.wgcol');
+  if(!col) return;
+  wgNew = {c: +col.dataset.c, col: col, pid: e.pointerId,
+           y0: e.clientY, at: wgMinAt(col, e.clientY), moved: false, ghost: null};
+  try{ col.setPointerCapture(e.pointerId); }catch(err){}
+  col.addEventListener('pointermove', wgNewMove);
+  col.addEventListener('pointerup', wgNewUp);
+  col.addEventListener('pointercancel', wgNewOff);
+}
+
+function wgNewSpan(clientY){
+  const n = wgNew, to = wgMinAt(n.col, clientY);
+  let s = Math.min(n.at, to), en = Math.max(n.at, to);
+  if(en - s < MIN_DUR){
+    if(to < n.at){ s = Math.max(0, en - MIN_DUR); }
+    else { en = Math.min(1439, s + MIN_DUR); }
+  }
+  return {s: s, e: en};
+}
+
+function wgNewMove(e){
+  const n = wgNew; if(!n) return;
+  if(!n.moved){
+    if(Math.abs(e.clientY - n.y0) < 5) return;
+    n.moved = true;
+    n.ghost = document.createElement('div');
+    n.ghost.className = 'wgb wgghost';
+    n.ghost.innerHTML = '<span class="wgn">New activity</span><span class="wgm"></span>';
+    n.ghost.style.left = '2px';
+    n.ghost.style.width = 'calc(100% - 5px)';
+    n.col.appendChild(n.ghost);
+  }
+  const sp = wgNewSpan(e.clientY);
+  n.cur = sp;
+  n.ghost.style.top = ((sp.s - wgBounds.a) * wgPpm).toFixed(1) + 'px';
+  n.ghost.style.height = Math.max(11, (sp.e - sp.s) * wgPpm).toFixed(1) + 'px';
+  n.ghost.classList.toggle('tiny', (sp.e - sp.s) * wgPpm < 26);
+  n.ghost.querySelector('.wgm').textContent = shortTime(sp.s) + '\u2013' + shortTime(sp.e);
+}
+
+function wgNewUp(e){
+  const n = wgNew;
+  wgNewOff();
+  if(!n || !n.moved) return;
+  const sp = n.cur || wgNewSpan(e.clientY);
+  wgClickOff = Date.now();                 /* the click that follows is not a separate add */
+  const b = {start: toHM(sp.s), end: toHM(sp.e), name: 'New activity', type: 'other'};
+  wgDays[n.c].list.push(b);
+  wgApply(n.c, b, true);
+}
+
+function wgNewOff(){
+  const n = wgNew; if(!n) return;
+  wgNew = null;
+  try{ n.col.releasePointerCapture(n.pid); }catch(err){}
+  n.col.removeEventListener('pointermove', wgNewMove);
+  n.col.removeEventListener('pointerup', wgNewUp);
+  n.col.removeEventListener('pointercancel', wgNewOff);
+  if(n.ghost && n.ghost.parentNode) n.ghost.parentNode.removeChild(n.ghost);
 }
 
 /* ---- selected-activity bar wiring ---- */
@@ -2394,13 +2690,14 @@ $('wgNext').onclick = () => wgStep(1);
 $('wgIn').onclick   = () => wgZoom(1.25);
 $('wgOut').onclick  = () => wgZoom(0.8);
 em.scroll.addEventListener('click', wgGridClick);
+em.grid.addEventListener('pointerdown', wgNewDown);
 ['wsName','wsType','wsStart','wsEnd','wsLock','wsDay'].forEach(id => {
   const n = $(id); if(n) n.onchange = wgSelEdit;
 });
 $('wsDel').onclick = wgDelete;
 
 /* keep the five days lined up with the day being viewed */
-window.addEventListener('resize', () => { if(draft && !em.main.hidden){ wgFit(); wgDraw(); } });
+window.addEventListener('resize', () => { if(wgDrag || wgNew) return; if(draft && !em.main.hidden){ wgFit(); wgDraw(); } });
 
 $('saveEdit').onclick = () => {
   draft.title = em.titleInput.value.trim() || DEFAULT_SCHEDULE.title;
