@@ -448,7 +448,76 @@ textarea{min-height:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospac
   .brand h1{white-space:normal;}
   .field-row{grid-template-columns:1fr;}
 }
-@media print{ .controls,.dayprogress{display:none;} }
+/* =======================================================================
+   PRINTABLE WEEK
+   A picture of a sheet of paper. Colours are hard-coded rather than themed
+   on purpose: paper is white whether the board is in day or night mode.
+   ======================================================================= */
+#wkPrint{display:none;}
+html.wk-open body{overflow:hidden;}
+html.wk-open #wkPrint{
+  display:block;position:fixed;inset:0;z-index:70;overflow:auto;
+  background:#e4eaf3;padding:0 0 44px;
+}
+.wkbar{
+  position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:12px 16px;background:rgba(255,255,255,.94);border-bottom:1px solid #d7e0ec;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+.wkhint{flex:1;min-width:170px;color:#5d6b83;font-weight:700;font-size:.86rem;}
+
+.wkpage{
+  --wks:1;
+  width:1060px;max-width:calc(100% - 32px);margin:22px auto;padding:32px 34px 24px;
+  background:#fff;color:#16233a;border-radius:14px;box-shadow:0 18px 50px rgba(22,35,58,.16);
+}
+.wkmast{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;
+  border-bottom:2px solid #16233a;padding-bottom:13px;margin-bottom:17px;}
+.wkmast h2{font-size:1.8rem;line-height:1.12;letter-spacing:-.015em;}
+.wkweek{margin:5px 0 0;color:#5d6b83;font-weight:700;font-size:.95rem;}
+.wkmark{color:#a6b1c2;font-weight:800;font-size:.72rem;letter-spacing:.09em;
+  text-transform:uppercase;white-space:nowrap;padding-bottom:3px;}
+
+.wkgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:calc(11px*var(--wks));align-items:start;}
+.wkday{border:1px solid #dbe3ee;border-radius:11px;overflow:hidden;background:#fff;}
+.wkdh{padding:calc(8px*var(--wks)) 10px;color:#fff;}
+.wkdn{display:block;font-family:'Fredoka',sans-serif;font-weight:600;font-size:calc(1rem*var(--wks));line-height:1.1;}
+.wkdd{display:block;margin-top:1px;font-size:calc(.7rem*var(--wks));font-weight:700;opacity:.85;}
+.wkblocks{list-style:none;margin:0;padding:0;}
+.wkb{display:flex;gap:8px;padding:calc(6px*var(--wks)) 9px calc(6px*var(--wks)) 0;
+  border-top:1px solid #eff3f9;}
+.wkb:first-child{border-top:0;}
+.wkrule{flex:none;width:4px;border-radius:0 3px 3px 0;background:#94a3b8;}
+.wktxt{flex:1;min-width:0;}
+.wkmeta{display:flex;justify-content:space-between;align-items:baseline;gap:6px;
+  font-size:calc(.665rem*var(--wks));font-weight:800;color:#78869a;font-variant-numeric:tabular-nums;}
+.wkdur{flex:none;color:#aab4c4;font-weight:700;}
+.wkname{display:flex;gap:5px;align-items:baseline;margin-top:1px;
+  font-weight:700;font-size:calc(.815rem*var(--wks));line-height:1.27;}
+.wkemoji{flex:none;font-size:calc(.85rem*var(--wks));}
+.wkempty{margin:0;padding:20px 10px;text-align:center;color:#aab4c4;font-weight:700;font-size:.76rem;}
+.wkfoot{display:flex;justify-content:space-between;gap:12px;margin-top:15px;padding-top:10px;
+  border-top:1px solid #e9eef6;color:#aab4c4;font-weight:700;font-size:.7rem;}
+
+@media (max-width:900px){
+  .wkpage{padding:22px 18px 18px;}
+  .wkgrid{grid-template-columns:repeat(2,1fr);}
+  .wkmast{flex-wrap:wrap;}
+}
+
+@media print{
+  .controls,.dayprogress{display:none;}
+  html.wk-open{background:#fff;}
+  html.wk-open body{background:#fff;overflow:visible;height:auto;}
+  html.wk-open .app,html.wk-open .home,html.wk-open .modal,
+  html.wk-open .toast,html.wk-open .wkbar{display:none !important;}
+  html.wk-open #wkPrint{position:static;display:block;background:#fff;padding:0;overflow:visible;}
+  html.wk-open .wkpage{width:auto;max-width:none;margin:0;padding:0;border-radius:0;box-shadow:none;}
+  html.wk-open .wkgrid{grid-template-columns:repeat(5,1fr);gap:8px;}
+  html.wk-open .wkday,html.wk-open .wkb{break-inside:avoid;page-break-inside:avoid;}
+  html.wk-open *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  @page{ size:letter landscape; margin:.4in; }
+}
 </style>
 <script>
 /* Paint hint only, so the board doesn't flash the wrong screen. The real
@@ -477,6 +546,7 @@ try{ if(!/[?&](c|sync)=/.test(location.search)) document.documentElement.classLi
         <button class="btn" id="themeBtn" title="Light / dark">🌙</button>
         <button class="btn" id="homeBtn" title="All your classes">🏠</button>
         <button class="btn" id="syncBtn" title="Sync this schedule across devices">☁️</button>
+        <button class="btn" id="printBtn" title="Print this week or save it as a PDF">🖨️ PDF</button>
         <button class="btn" id="editBtn" title="Edit the normal weekly schedule">✏️ Week</button>
         <button class="btn" id="fsBtn" title="Full screen">⛶</button>
       </div>
@@ -518,6 +588,26 @@ try{ if(!/[?&](c|sync)=/.test(location.search)) document.documentElement.classLi
       <p class="home-label">Your classes</p>
       <div class="home-list" id="homeList"></div>
     </div>
+  </div>
+</div>
+
+<!-- ============ printable week ============ -->
+<div id="wkPrint">
+  <div class="wkbar">
+    <button class="btn btn-primary" id="wkGo">🖨️ Print / Save as PDF</button>
+    <button class="btn" id="wkClose">Close</button>
+    <span class="wkhint">In the print window choose <strong>Save as PDF</strong> to download it.</span>
+  </div>
+  <div class="wkpage" id="wkPage">
+    <div class="wkmast">
+      <div style="min-width:0">
+        <h2 id="wkTitle">Our Class</h2>
+        <p class="wkweek" id="wkWeek">&mdash;</p>
+      </div>
+      <span class="wkmark">Weekly Schedule</span>
+    </div>
+    <div class="wkgrid" id="wkGrid"></div>
+    <div class="wkfoot"><span id="wkFootL">classtimeline.com</span><span id="wkFootR"></span></div>
   </div>
 </div>
 
@@ -2149,8 +2239,8 @@ $('loadJson').onclick = () => {
 };
 em.modal.onclick = e => { if(e.target===em.modal) closeEditor(); };
 document.addEventListener('keydown', e => {
-  const anyOpen = em.modal.classList.contains('open') || bm.modal.classList.contains('open');
-  if(e.key==='Escape'){ closeEditor(); closeBlock(); }
+  const anyOpen = em.modal.classList.contains('open') || bm.modal.classList.contains('open') || weekPrintOpen();
+  if(e.key==='Escape'){ closeEditor(); closeBlock(); closeWeekPrint(); }
   if(e.key==='f' && !anyOpen) el.fsBtn.click();
   if(e.key==='Enter' && bm.modal.classList.contains('open')) saveBlock();
 });
@@ -2219,7 +2309,89 @@ function deviceId(){
   return d;
 }
 /* the sync sheet itself doesn't count — connecting from it should land right away */
+/* =======================================================================
+   PRINTABLE WEEK  —  Monday to Friday of whatever week you're looking at,
+   with each day's own edits baked in, laid out as a sheet you can hand out.
+   Printing is the browser's job: every modern print dialog offers
+   "Save as PDF", so there is no library here and nothing to download.
+   ======================================================================= */
+const WK_HUES  = {mon:'#2563eb', tue:'#7c3aed', wed:'#0d9488', thu:'#c2410c', fri:'#db2777'};
+const MONTHS   = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+
+/* the blocks for any date, honouring that day's own changes */
+function blocksOn(d){
+  const ov = dayOverrides[localDateStr(d)];
+  return sortDay(ov || schedule.days[dayKeyOf(d)] || []);
+}
+/* Monday through Friday of the week containing d */
+function weekOf(d){
+  const x = startOfDay(d), mon = addDays(x, 1 - (x.getDay() || 7));
+  return [0,1,2,3,4].map(i => addDays(mon, i));
+}
+function weekLabel(days){
+  const a = days[0], b = days[4], am = MONTHS[a.getMonth()], bm = MONTHS[b.getMonth()];
+  if(a.getFullYear() !== b.getFullYear())
+    return am+' '+a.getDate()+', '+a.getFullYear()+' – '+bm+' '+b.getDate()+', '+b.getFullYear();
+  if(am === bm) return am+' '+a.getDate()+'–'+b.getDate()+', '+b.getFullYear();
+  return am+' '+a.getDate()+' – '+bm+' '+b.getDate()+', '+b.getFullYear();
+}
+/* "8:35–10:15 AM" when both ends share a half of the day, else spell both out */
+function rangeLabel(a, z){
+  const A = fmt12(a), Z = fmt12(z);
+  return A.ap === Z.ap ? A.t+'–'+Z.t+' '+Z.ap : A.t+' '+A.ap+'–'+Z.t+' '+Z.ap;
+}
+
+function buildWeekSheet(){
+  const days  = weekOf(viewDate);
+  const lists = days.map(blocksOn);
+  const most  = lists.reduce((m,l) => Math.max(m, l.length), 0);
+
+  $('wkTitle').textContent = schedule.title || DEFAULT_SCHEDULE.title;
+  $('wkWeek').textContent  = 'Week of ' + weekLabel(days);
+  $('wkFootR').textContent = most ? '' : 'Nothing scheduled this week yet';
+  // a packed day shrinks the whole sheet so the week still lands on one page
+  $('wkPage').style.setProperty('--wks', most > 11 ? Math.max(.5, 11 / most).toFixed(3) : '1');
+
+  $('wkGrid').innerHTML = days.map((d, i) => {
+    const key = DAY_KEYS[i];
+    const rows = lists[i].map(b => {
+      const t = typeOf(b.type), a = toMin(b.start), z = toMin(b.end);
+      return '<li class="wkb">'
+           +   '<span class="wkrule" style="background:'+t.color+'"></span>'
+           +   '<span class="wktxt">'
+           +     '<span class="wkmeta"><span>'+esc(rangeLabel(a,z))+'</span>'
+           +       '<span class="wkdur">'+esc(durLabel(Math.max(0, z-a)))+'</span></span>'
+           +     '<span class="wkname"><span class="wkemoji">'+t.icon+'</span>'
+           +       '<span>'+esc(b.name || t.label)+'</span></span>'
+           +   '</span>'
+           + '</li>';
+    }).join('');
+    return '<section class="wkday">'
+         +   '<header class="wkdh" style="background:'+WK_HUES[key]+'">'
+         +     '<span class="wkdn">'+DAY_NAMES[key]+'</span>'
+         +     '<span class="wkdd">'+MONTHS[d.getMonth()].slice(0,3)+' '+d.getDate()+'</span>'
+         +   '</header>'
+         +   (rows ? '<ol class="wkblocks">'+rows+'</ol>'
+                   : '<p class="wkempty">Nothing scheduled</p>')
+         + '</section>';
+  }).join('');
+}
+
+const weekPrintOpen = () => document.documentElement.classList.contains('wk-open');
+function openWeekPrint(){
+  buildWeekSheet();
+  document.documentElement.classList.add('wk-open');
+  $('wkPrint').scrollTop = 0;
+}
+function closeWeekPrint(){ document.documentElement.classList.remove('wk-open'); }
+
+$('printBtn').onclick = openWeekPrint;
+$('wkClose').onclick  = closeWeekPrint;
+$('wkGo').onclick     = () => { window.print(); };
+
 function anyModalOpen(){
+  if(weekPrintOpen()) return true;
   const list = document.querySelectorAll('.modal.open');
   for(let i=0;i<list.length;i++) if(list[i].id !== 'syncModal') return true;
   return false;
