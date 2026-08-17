@@ -1879,6 +1879,23 @@ function repaint(){ if(atHome()) return; syncTick();
    <select> stays in the DOM and stays the source of truth — everything
    that reads or writes .value keeps working untouched.
    ======================================================================= */
+/* the menu is absolutely positioned, so it is clipped by the nearest ancestor
+   that scrolls or hides its overflow -- inside a modal that is the sheet body,
+   not the window. measure against whichever comes first. */
+const TP_MENU_H = 246;
+
+function clipBox(node){
+  let top = 0, bottom = window.innerHeight;
+  for(let p = node.parentElement; p && p !== document.body; p = p.parentElement){
+    const cs = getComputedStyle(p);
+    if(cs.overflowY === 'visible' && cs.overflowX === 'visible') continue;
+    const b = p.getBoundingClientRect();
+    if(b.top > top) top = b.top;
+    if(b.bottom < bottom) bottom = b.bottom;
+  }
+  return {top, bottom};
+}
+
 function typePicker(sel){
   if(!sel || sel.dataset.tp) return;
   sel.dataset.tp = '1';
@@ -1935,9 +1952,12 @@ function typePicker(sel){
     hi = Math.max(0, opts().findIndex(o => o.v === sel.value));
     paint('');
     inp.select();
-    /* flip the list above the box when there is no room below it */
-    const r = inp.getBoundingClientRect();
-    menu.classList.toggle('up', window.innerHeight - r.bottom < 260 && r.top > 260);
+    /* flip the list above the box when there is more room up there */
+    const r = inp.getBoundingClientRect(), c = clipBox(wrap);
+    const below = c.bottom - r.bottom, above = r.top - c.top;
+    const up = below < TP_MENU_H && above > below;
+    menu.classList.toggle('up', up);
+    menu.style.maxHeight = clampN(Math.round((up ? above : below) - 14), 132, TP_MENU_H) + 'px';
     const on = menu.querySelector('.tpo.hi');
     if(on) on.scrollIntoView({block: 'nearest'});
   }
